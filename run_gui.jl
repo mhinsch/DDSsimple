@@ -15,15 +15,13 @@
 
 
 
+using SimpleDirectMediaLayer.LibSDL2
+
 using MiniEvents
 
 include("util.jl")
 include("stupider.jl")
-
-using SimpleDirectMediaLayer.LibSDL2
-
-push!(LOAD_PATH, pwd())
-
+include("main_util.jl")
 
 using SimpleGui
 
@@ -110,55 +108,23 @@ function run(model, gui, graphs, logfile, max_step = 0.1)
 end
 
 
-
-### setup, run, cleanup
-
-
-
-## parameters
-
-# parse command line args
-#= using ArgParse 
-# translate params to args and vice versa
-using Params2Args
-
-const arg_settings = ArgParseSettings("run simulation", autofix_names=true)
-
-@add_arg_table! arg_settings begin
-	"--rand-seed", "-r"
-		help = "random seed"
-		arg_type = Int
-		default = 42
-	"--stop-time", "-t"
-		help = "at which time to stop the simulation" 
-		arg_type = Float64 
-		default = 0.0
-	"--max-step", "-m"
-		help = "upper limit for simulated time per frame"
-		arg_type = Float64
-		default = 1.0
-end
-
-# new group of arguments
-add_arg_group!(arg_settings, "simulation parameters")
-
-# translate Params into args
-include("params.jl")
-fields_as_args!(arg_settings, Params)
-
-# parse cmdl args
-const args = parse_args(arg_settings, as_symbols=true)
-# and create a Params object from them
-const p = @create_from_args(args, Params)
-=#
-
 function prepare_outfiles(fname)
 	logfile = open(fname, "w")
 	#print_header(logfile, Data)
 	logfile
 end
 
-const p = Pars()
+const allpars, args = load_parameters(ARGS, Pars) #=, cmdl = ( 
+    ["--log-freq"],
+    Dict(:help => "set time steps between log calls", :default => 23*60, :arg_type => Int),
+    ["--output", "-o"],
+    Dict(:help => "set data output file name", :default => "data.tsv", :arg_type => String)))
+    =#
+    
+const p = allpars[1]
+
+Random.seed!(p.seed)
+
 
 ## setup
 
@@ -182,4 +148,4 @@ run(model, gui, graphs, logf)
 
 close(logf)
 
-SDL2.Quit()
+Quit()

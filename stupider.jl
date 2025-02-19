@@ -5,43 +5,77 @@ using MiniEvents
 
 include("util.jl")
 
-
+"Model parameters"
 @kwdef mutable struct Pars
+	"world size"
 	sz :: Pos = 1000.0, 1000.0
+	"initial pop size"
 	n_ini :: Int = 50
+	"y location of initial pop"
 	ini_y :: Pos = 0.49, 0.51
+	"x location of initial pop"
 	ini_x :: Pos = 0.49, 0.51
 
+	"reproduction rate"
 	r_repr :: Float64 = 0.1
+	"natural ibackground mortality"
 	r_death :: Float64 = 1.0/60.0
+	"mortality under starvation"
 	r_starve :: Float64 = 1.0
+	"movement rate"
 	r_move :: Float64 = 0.01
+	"exchange rate"
 	r_exch :: Float64 = 1.0
 	
+	"effect of provisioning on reproduction (0-1)"
 	eff_prov_repr :: Float64 = 1.0
+	"effect of provisioning on death (0-1)"
 	eff_prov_death :: Float64 = 0.0
 	
+	"carrying capacity"
 	capacity :: Float64 = 5.0
+	"sd of influence of density"
 	spread_density :: Float64 = 5.0
+	"max range of influence of density"
 	rad_density :: Float64 = 15.0
-	
-	mu_mig :: Float64 = 0.0
-	theta_mig :: Float64 = 10.0
 
+	"whether agents are stopped at the edge or disappear"
+	open_edge :: Bool = true
+	"distribution of step size: 1 - Uniform, 2 - Normal, 3 - Levy"
+	move_mode :: Int = 3
+
+	"mean step size"
+	mu_mig :: Float64 = 0.0
+	"sd of stepsize"
+	theta_mig :: Float64 = 0.5
+
+	"sd of exchange distance"
 	spread_exchange :: Float64 = 10
+	"maximum exchange distance"
 	rad_exchange :: Float64 = 30
+	"proportion of resources that get exchanged"
 	prop_exchange :: Float64 = 0.5
+	"efficiency of exchange"
 	eff_exchange :: Float64 = 0.9
+	"rate at which resources get reset to default"
 	r_reset_prov :: Float64 = 1.0
-	
+
+	"rate of appearance of weather effects"
 	r_weather :: Float64 = 20
+	"rate of disappearance of weather effects"
 	r_weather_end :: Float64 = 0.3
 
+	"sd of effect of weather"
 	spread_weather :: Float64 = 10.0
+	"max range of effect of weather"
 	rad_weather :: Float64 = 30.0
+	"min and max value of weather influence on capacity"
 	wth_range :: Tuple{Float64, Float64} = -1.0, 0.2
 
+	"random seed"
 	seed :: Int = 41
+	"simulation time"
+	t_max :: Float64 = 1000.0
 end
 
 
@@ -97,13 +131,20 @@ end
 		old_pos = person.pos
 		old_local_cond = person.local_cond
 
-		move!(person, @sim().world, @sim().pars)
-
-		person.local_cond = 1.0
-		set_weather_arrive!(person, @sim().world, @sim().pars)
-		
 		affected = Person[]
-		adj_density_move!(old_pos, person, affected, @sim().world, @sim().pars)
+
+		died = move!(person, @sim().world, @sim().pars)
+		if died
+			adj_density_leave!(person.pos, affected, @sim().world, @sim().pars)
+
+			@sim().N -= 1
+			@kill person
+		else
+			person.local_cond = 1.0
+			set_weather_arrive!(person, @sim().world, @sim().pars)
+		
+			adj_density_move!(old_pos, person, affected, @sim().world, @sim().pars)
+		end
 #		println("move: $(old_pos) -> $(person.pos), $(person.density), $(person.weather)")
 		@r affected
 	end
@@ -162,11 +203,20 @@ end
 @inline death_rate(person, pars) = pars.r_death + 
 	pars.eff_prov_death * max(0.0, 1.0-provision(person, pars)) * pars.r_starve
 
+
 @inline move_rate(person, pars) = pars.r_move
-#@inline rand_mig_dist(pars) = rand(Levy(pars.mu_mig, pars.theta_mig))
-@inline rand_mig_dist(pars) = abs(rand(Normal(pars.mu_mig, pars.theta_mig)))
-#@inline rand_mig_dist(pars) = rand() * (pars.theta_mig - pars.mu_mig) + pars.mu_mig
+
+@inline function rand_mig_dist(pars)
+	if pars.move_mode == 1
+		rand() * 2 * pars.theta_mig + pars.mu_mig - pars.theta_mig
+	elseif pars.move_mode == 2
+		abs(rand(Normal(pars.mu_mig, pars.theta_mig)))
+	elseif pars.move_mode == 3
+		abs(rand(Levy(pars.mu_mig, pars.theta_mig)))
+	end
+end
 	
+
 @inline exchange_weight(donee, donor, pars) =
 	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * provision(donor, pars)
 @inline exchange_rate(person, pars) =
@@ -221,7 +271,16 @@ function move!(person, world, pars)
 	dx = cos(angle) * dist
 	dy = sin(angle) * dist
 
-	new_pos = limit(0.0, pos[1] + dy, pars.sz[1]), limit(0.0, pos[2] + dx, pars.sz[2])
+	new_pos = pos[1] + dy, pos[2] + dx
+
+	if pars.open_edge
+		if !(0.0 <= new_pos[1] <= pars.sz[1] && 0.0 <= new_pos[2] <= pars.sz[2])
+			die!(person, world, pars)
+			return true
+		end
+	else
+		new_pos = limit(0.0, new_pos[1], pars.sz[1]), limit(0.0, new_pos[2], pars.sz[2])
+	end
 
 	old_grid_pos = pos2cache_idx(world.pop_cache, pos)
 	new_grid_pos = pos2cache_idx(world.pop_cache, new_pos)
@@ -233,7 +292,7 @@ function move!(person, world, pars)
 
 	person.pos = new_pos
 
-	nothing
+	false
 end
 
 
