@@ -23,6 +23,7 @@ gaussian(x, y, s) = exp(-x^2/(2*s^2)-y^2/(2*s^2))
 
 
 sq_dist(a, b) = sum((a[1]-b[1], a[2]-b[2]).^2)
+euc_dist(a, b) = sqrt(sq_dist(a, b))
 
 
 const Pos = Tuple{Float64, Float64}
@@ -65,6 +66,15 @@ mutable struct Cache2DIter{ELT}
 end
 
 
+# iterate through the entire cache
+iter_cache(cache) = Cache2DIter(cache.data, (1.0,1.0), 0.0,
+	1, 1,
+	(size(cache.data).-(1,1))...,
+	0, 1
+	)
+	
+
+# iterate through all elements within a circle around pos
 function iter_circle(cache, pos, radius)
 	#println(pos, " ", radius)
 	# coordinates of window in cache
@@ -102,7 +112,7 @@ function Base.iterate(hhci::CITER, dummy) where {CITER <: Cache2DIter}
 		if hhci.j <= length(vec)
 			el = vec[hhci.j]
 			hhci.j += 1
-			if sum((el.pos .- hhci.pos).^2) < hhci.r2
+			if hhci.r2 <= 0.0 || sum((el.pos .- hhci.pos).^2) < hhci.r2
 				#print("!")
 				return el, hhci
 			end

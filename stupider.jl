@@ -1,198 +1,12 @@
 using Random
-using Distributions
 
-using MiniEvents
 
 include("util.jl")
 
-"Model parameters"
-@kwdef mutable struct Pars
-	"world size"
-	sz :: Pos = 1000.0, 1000.0
-	"initial pop size"
-	n_ini :: Int = 50
-	"y location of initial pop"
-	ini_y :: Pos = 0.49, 0.51
-	"x location of initial pop"
-	ini_x :: Pos = 0.49, 0.51
+include("params.jl")
 
-	"reproduction rate"
-	r_repr :: Float64 = 0.1
-	"natural ibackground mortality"
-	r_death :: Float64 = 1.0/60.0
-	"mortality under starvation"
-	r_starve :: Float64 = 1.0
-	"movement rate"
-	r_move :: Float64 = 0.01
-	"exchange rate"
-	r_exch :: Float64 = 1.0
-	
-	"effect of provisioning on reproduction (0-1)"
-	eff_prov_repr :: Float64 = 1.0
-	"effect of provisioning on death (0-1)"
-	eff_prov_death :: Float64 = 0.0
-	
-	"carrying capacity"
-	capacity :: Float64 = 5.0
-	"sd of influence of density"
-	spread_density :: Float64 = 5.0
-	"max range of influence of density"
-	rad_density :: Float64 = 15.0
+include("model.jl")	
 
-	"whether agents are stopped at the edge or disappear"
-	open_edge :: Bool = true
-	"distribution of step size: 1 - Uniform, 2 - Normal, 3 - Levy"
-	move_mode :: Int = 3
-
-	"mean step size"
-	mu_mig :: Float64 = 0.0
-	"sd of stepsize"
-	theta_mig :: Float64 = 0.5
-
-	"sd of exchange distance"
-	spread_exchange :: Float64 = 10
-	"maximum exchange distance"
-	rad_exchange :: Float64 = 30
-	"proportion of resources that get exchanged"
-	prop_exchange :: Float64 = 0.5
-	"efficiency of exchange"
-	eff_exchange :: Float64 = 0.9
-	"rate at which resources get reset to default"
-	r_reset_prov :: Float64 = 1.0
-
-	"rate of appearance of weather effects"
-	r_weather :: Float64 = 20
-	"rate of disappearance of weather effects"
-	r_weather_end :: Float64 = 0.3
-
-	"sd of effect of weather"
-	spread_weather :: Float64 = 10.0
-	"max range of effect of weather"
-	rad_weather :: Float64 = 30.0
-	"min and max value of weather influence on capacity"
-	wth_range :: Tuple{Float64, Float64} = -1.0, 0.2
-
-	"random seed"
-	seed :: Int = 41
-	"simulation time"
-	t_max :: Float64 = 1000.0
-end
-
-
-mutable struct Person
-	pos :: Pos
-	density :: Float64
-	local_cond :: Float64
-	exchange :: Float64
-end
-
-Person(pos) = Person(pos, 0.0, 1.0, 0.0)
-
-
-struct Weather
-	pos :: Pos
-	effect :: Float64
-end
-
-
-mutable struct World
-	pop_cache :: Cache2D{Person}
-	weather_cache :: Cache2D{Weather}
-end
-
-
-@events person::Person begin
-	@debug
-
-	@rate(repr_rate(person, @sim().pars)) ~ true => begin
-		child = reproduce!(person, @sim().world, @sim().pars)
-		affected = Person[]
-		adj_density_arrive!(child, affected, @sim().world, @sim().pars)
-		set_weather_arrive!(child, @sim().world, @sim().pars)
-#		println("repr: $(child.pos), $(child.density), $(child.weather)")
-		@sim().N += 1
-		@spawn child
-		@r affected
-	end
-
-	@rate(death_rate(person, @sim().pars)) ~ true => begin
-		# removes person from cache, so won't be affected by density change
-		die!(person, @sim().world, @sim().pars)
-		
-		affected = Person[]
-		adj_density_leave!(person.pos, affected, @sim().world, @sim().pars)
-
-		@sim().N -= 1
-		@kill person
-		@r affected
-	end
-		
-	@rate(move_rate(person, @sim().pars)) ~ true => begin
-		old_pos = person.pos
-		old_local_cond = person.local_cond
-
-		affected = Person[]
-
-		died = move!(person, @sim().world, @sim().pars)
-		if died
-			adj_density_leave!(person.pos, affected, @sim().world, @sim().pars)
-
-			@sim().N -= 1
-			@kill person
-		else
-			person.local_cond = 1.0
-			set_weather_arrive!(person, @sim().world, @sim().pars)
-		
-			adj_density_move!(old_pos, person, affected, @sim().world, @sim().pars)
-		end
-#		println("move: $(old_pos) -> $(person.pos), $(person.density), $(person.weather)")
-		@r affected
-	end
-
-	@rate(exchange_rate(person, @sim().pars)) ~ provision(person, @sim().pars) < 0.0 => begin
-		donor = exchange!(person, @sim().world, @sim().pars)
-		if donor != person
-			@r donor
-		end
-		@r person 
-	end
-
-	@rate(@sim().pars.r_reset_prov) ~ person.exchange != 0.0 => begin
-		person.exchange = 0.0
-		@r person
-	end
-end
-
-
-@events weather::Weather begin
-	@debug
-
-	@rate(@sim().pars.r_weather_end) ~ true => begin
-		affected = remove_weather!(@sim().world, weather, @sim().pars)
-		@kill weather
-		@r affected
-	end
-end
-
-
-@events world::World begin
-	@debug
-
-	@rate(@sim().pars.r_weather) ~ true =>
-	begin
-		weather, affected = add_weather!(world, @sim().pars)
-		@spawn weather
-		@r world affected
-	end
-end
-
-
-@simulation Sim Person Weather World begin
-	world :: World
-	pars :: Pars
-	N :: Int
-end
-	
 
 @inline provision(person, pars) = person.exchange + person.local_cond -
 	person.density / pars.capacity
@@ -206,7 +20,7 @@ end
 
 @inline move_rate(person, pars) = pars.r_move
 
-@inline function rand_mig_dist(pars)
+function rand_mig_dist(pars)
 	if pars.move_mode == 1
 		rand() * 2 * pars.theta_mig + pars.mu_mig - pars.theta_mig
 	elseif pars.move_mode == 2
@@ -218,7 +32,8 @@ end
 	
 
 @inline exchange_weight(donee, donor, pars) =
-	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * provision(donor, pars)
+	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * provision(donor, pars) *
+	donor.coop
 @inline exchange_rate(person, pars) =
 	max(0.0, -provision(person, pars)) * pars.r_exch
 
@@ -353,7 +168,7 @@ function exchange!(person, world, pars)
 	weights = Float64[]
 
 	for p in iter_circle(world.pop_cache, person.pos, pars.rad_exchange)
-		if provision(p, pars) > 0.0
+		if provision(p, pars) > 0.0 && p.coop > 0.0
 			push!(pot_donors, p)
 			push!(weights, exchange_weight(person, p, pars))
 		end
@@ -366,7 +181,7 @@ function exchange!(person, world, pars)
 	s = rand() * sum(weights)
 	for (p,w) in zip(pot_donors, weights)
 		if s < w
-			donation = provision(p, pars) * pars.prop_exchange
+			donation = provision(p, pars) * pars.prop_exchange * p.coop
 			@assert donation > 0.0
 			p.exchange -= donation
 			person.exchange += donation * pars.eff_exchange
@@ -377,6 +192,12 @@ function exchange!(person, world, pars)
 	end
 	error("donor selection went wrong")		
 	person
+end
+
+
+function mutate!(person, pars)
+	person.coop = limit(0.0, person.coop + rand(Normal(0.0, pars.d_mut)), 1.0)
+	nothing
 end
 
 
@@ -391,10 +212,11 @@ function setup(pars)
 	
 	pop = Person[]
 	for i in 1:pars.n_ini
-		pos = pars.sz[1] * (rand() * (pars.ini_y[2]-pars.ini_y[1]) + pars.ini_y[1]), 
-			  pars.sz[2] * (rand() * (pars.ini_x[2]-pars.ini_x[1]) + pars.ini_x[1])
+		pos = pars.sz[1]/2 - pars.ini_y/2 + rand() * pars.ini_y, 
+			   pars.sz[2]/2 - pars.ini_x/2 + rand() * pars.ini_x 
 			   
 		person = Person(pos)
+		person.coop = rand() * (pars.ini_coop[2] - pars.ini_coop[1]) + pars.ini_coop[1]
 		push!(pop, person)
 		add_to_cache!(world.pop_cache, person, person.pos)
 		adj_density_arrive!(person, Person[], world, pars)
@@ -433,26 +255,4 @@ function check_weather_density(world, pars)
 	end
 end
 
-
-function show_world(world, pars)
-	println(length(world.pop))
-	for y in 1:size(world.lsc)[1]
-		for x in 1:size(world.lsc)[2]
-			lvl = length(world.lsc[y, x]) / pars.k
-			if lvl == 0.0
-				ic = " "
-			elseif lvl < 0.2
-				ic = "."
-			elseif lvl < 0.5
-				ic = ":"
-			elseif lvl < 0.9
-				ic = "%"
-			else
-				ic = "#"
-			end
-			print(ic)
-		end
-		println()
-	end
-end
 

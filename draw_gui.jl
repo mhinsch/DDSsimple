@@ -53,8 +53,10 @@ function draw_world(canvas, model)
 	for y in 1:size(pc)[1], x in 1:size(pc)[2]
 		for a in pc[y, x]
 			p = a.pos ./ (zoomy, zoomx)
+
+			col = rgb(a.coop*150+105, a.coop*150+105, 255)
 			
-			circle_fill(canvas, floor(Int, p[1]), floor(Int, p[2]), 2, WHITE, true)
+			circle_fill(canvas, floor(Int, p[1]), floor(Int, p[2]), 2, col, true)
 		end
 	end
 end
