@@ -32,7 +32,7 @@ end
 
 points_on_axis(pc :: MultiParAxis) = isempty(pc.keys) ?
 	zip(repeated(pc.names), pc.values) :
-	zip(repeated(pc.names), pc.values, pc.keys)
+	zip(pc.keys, repeated(pc.names), pc.values)
 
 
 default!(j, name, value) = par!(j, name, [value])
@@ -50,13 +50,20 @@ function par!(j, names, values)
 end
 
 function par!(j, nams, vals::Dict)
+	pc = MultiParAxis(nams, collect(values(vals)), collect(Symbol.(keys(vals))))
+	par!(j, pc)
+end
+
+
+function par!(j, nams, vals::NamedTuple)
 	pc = MultiParAxis(nams, collect(values(vals)), collect(keys(vals)))
 	par!(j, pc)
 end
 
 
+
 	
-mutable struct ParSpace
+struct ParSpace
 	pcs :: Vector{ParAxis}
 end
 
@@ -73,11 +80,11 @@ function ParSpace(combis...; defaults=[])
 end
 
 
-
 points_in_space(j :: ParSpace) = product(points_on_axis.(j.pcs)...)
 
 
 par!(j, pc) = push!(j.pcs, pc)
+
 
 # plain version
 to_cmdl_arg(arg :: Tuple{Symbol, VAL}, prefix, sep = " ") where {VAL} =
@@ -106,11 +113,27 @@ function apply_value!(params, arg :: Tuple{ITER1, ITER2}) where {ITER1, ITER2}
 	end
 end
 
+function apply_value!(params, arg :: Tuple{Symbol, ITER1, ITER2}) where {ITER1, ITER2}
+	apply_value!(params, (arg[2], arg[3]))
+end
+
 get_values(arg :: Tuple{ITER1, ITER2}) where {ITER1, ITER2} =
 	collect(arg[2])
 
+function get_values(arg :: Tuple{Symbol, ITER1, ITER2}) where {ITER1, ITER2}
+	ret = []
+	push!(ret, arg[1])
+	append!(ret, collect(arg[3]))
+	ret
+end
+
 function get_col_names_types(pc :: MultiParAxis{NI, VI}) where {NI, VI}
-	[ (n, eltype(typeof(v))) for (n, v) in zip(pc.names, pc.values) ]
+	if isempty(pc.keys)
+		[ (n, eltype(typeof(v))) for (n, v) in zip(pc.names, pc.values) ]
+	else
+		nvs = [ (n, eltype(typeof(v))) for (n, v) in zip(pc.names, pc.values) ]
+		[(Symbol(join(pc.names, "__")), Symbol) ; nvs]
+	end 
 end
 
 
@@ -127,9 +150,10 @@ function apply_values!(params, pc)
 	for arg in pc
 		apply_value!(params, arg)
 	end
+	params
 end
 
-function get_values(pc)
+function get_pc_values(pc)
 	ret = []
 	for arg in pc
 		append!(ret, get_values(arg))
@@ -137,7 +161,7 @@ function get_values(pc)
 	ret
 end
 
-add_to_df!(pc, df) = push!(df, get_values(pc))
+add_to_df!(pc, df) = push!(df, get_pc_values(pc))
 
 
 function to_cmdl_args(j :: ParSpace, prefix, sep = " ")
