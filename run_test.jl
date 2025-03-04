@@ -1,44 +1,69 @@
 include("run.jl")
 
+
+using Base.Threads
+using DataFrames
+
 using Jeeps
 
-function run_once(logfname, ovr)
 
-    const model, logf = prepare_model(ARGS, logfname, ovr) 
-    run_model(model, logf)
-    close(logf)
+function run_once(pars)
+    Random.seed!(pars.seed)    
+    model = setup(pars)
 
+	t = 1.0
+
+    data = observe(Data, model.world, t, model.pars)
+
+	while t < model.pars.t_max
+		step_until!(model, t) # run internal scheduler up to the next time step
+	    data = observe(Data, model.world, t, model.pars)
+		t += 1
+	end
+
+    data
 end
 
-const ps = ParamSpace(
-    defaults = [
-        :ini_coop => (1.0, 1.0),
-        :move_mode => 2,
-        :r_mut => 0.0],
 
-    :r_exch => [0.0, 1.0],
+function run_all(parspace, verbose = false)
+    df = create_dataframe!(Data, DataFrame())
+    df.seed = Int[]
+    for seed in 1:10
+        for parpoint in points_in_space(parspace)
+            pars = apply_values!(Pars(), parpoint)
+            pars.seed = seed
+            if verbose
+                @time data = run_once(pars)
+            else
+                data = run_once(pars)
+            end
+            add_to_dataframe!(df, data, (), (seed,))
+            if verbose
+                println(parpoint)
+            else
+                print(".")
+            end
+        end
+    end
+    df
+end
 
-    (:r_move, :theta_mig) => [
-        (0.01, 20.0),
-        (0.1, 2.0),
-        (1.0, 0.2)],
 
-    (:eff_prov_repr, :eff_prov_death) => [
-        (1.0, 0.0),
-        (0.5, 0.5),
-        (0.0, 1.0) ],
-
-    (:spread_weather, :rad_weather) => [
-        (5.0, 15.0),
-        (10.0, 30.0),
-        (20.0, 60.0) ],
-
-    :r_weather => [10, 20, 40],
-    
-    :r_weather_end => [0.1, 0.3, 0.9],
-
-    :seed => 1:10
-    )
-    
-    
+function run_all_threaded(parspace)
+    dfs = [DataFrame() for i in 1:10]
+    pardf = create_df!(parspace, DataFrame())
+    @threads for seed in 1:10
+        create_dataframe!(Data, dfs[seed])
+        dfs[seed].seed = Int[]
+        for parpoint in points_in_space(parspace)
+            pars = apply_values!(Pars(), parpoint)
+            pars.seed = seed
+            data = run_once(pars)
+            add_to_dataframe!(dfs[seed], data, (), (seed,))
+            print(".")
+        end
+        dfs[seed] = hcat(pardf, dfs[seed])
+    end
+    dfs
+end
 
