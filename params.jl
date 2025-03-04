@@ -4,12 +4,12 @@
 	"world size"
 	sz :: Pos = 1000.0, 1000.0
 	"initial pop size"
-	n_ini :: Int = 100
+	n_ini :: Int = 200
 	"y location of initial pop"
-	ini_y :: Float64 = 40.0
+	ini_y :: Float64 = 100.0
 	"x location of initial pop"
-	ini_x :: Float64 = 40.0
-    ini_coop :: Tuple{Float64, Float64} = 0.0, 1.0
+	ini_x :: Float64 = 100.0
+    ini_coop :: Vector{Float64} = [0.0, 1.0]
 	
 	"reproduction rate"
 	r_repr :: Float64 = 0.1
@@ -68,7 +68,7 @@
 	"max range of effect of weather"
 	rad_weather :: Float64 = 30.0
 	"min and max value of weather influence on capacity"
-	wth_range :: Tuple{Float64, Float64} = -1.0, 0.2
+	wth_range :: Vector{Float64} = [-1.0, 0.2]
 
 	"random seed"
 	seed :: Int = 41
