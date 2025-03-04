@@ -15,6 +15,8 @@ const MMA = MaxMinAcc{Float64}
         @stat("outside", CountAcc) <| (euc_dist(p.pos, pars.sz./2) > 200.0)
         @stat("donors", CountAcc) <| (p.exchange < 0.0)
         @stat("donees", CountAcc) <| (p.exchange > 0.0)
+        @stat("prov", MVA) <| provision(p, pars)
+        @stat("coop", MVA) <| p.coop
     end
 end
 

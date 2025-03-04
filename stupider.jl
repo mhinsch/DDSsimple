@@ -66,9 +66,10 @@ end
 
 
 function reproduce!(person, world, pars)
-	person = Person(person.pos)
-	add_to_cache!(world.pop_cache, person, person.pos)
-	person
+	child = Person(person.pos)
+	child.coop = person.coop
+	add_to_cache!(world.pop_cache, child, child.pos)
+	child
 end
 
 
@@ -167,10 +168,13 @@ function exchange!(person, world, pars)
 	pot_donors = Person[]
 	weights = Float64[]
 
+	sum_w = 0.0
 	for p in iter_circle(world.pop_cache, person.pos, pars.rad_exchange)
 		if provision(p, pars) > 0.0 && p.coop > 0.0
 			push!(pot_donors, p)
 			push!(weights, exchange_weight(person, p, pars))
+			@assert weights[end] >= 0.0
+			sum_w += weights[end]
 		end
 	end
 
@@ -178,7 +182,7 @@ function exchange!(person, world, pars)
 		return person
 	end
 
-	s = rand() * sum(weights)
+	s = rand() * sum_w
 	for (p,w) in zip(pot_donors, weights)
 		if s < w
 			donation = provision(p, pars) * pars.prop_exchange * p.coop

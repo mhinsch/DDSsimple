@@ -59,6 +59,8 @@ function draw_world(canvas, model)
 			circle_fill(canvas, floor(Int, p[1]), floor(Int, p[2]), 2, col, true)
 		end
 	end
+	
+	circle(canvas, xs ÷ 2, ys ÷ 2, floor(Int, 200/zoomx), rgb(0, 255, 0), true)
 end
 
 # draw both panels to video memory

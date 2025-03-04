@@ -54,13 +54,13 @@ end
 
 
 mutable struct Cache2DIter{ELT}
-	cache :: Matrix{Vector{ELT}}
-	pos :: Pos
-	r2 :: Float64
-	top :: Int
-	left :: Int
-	ym :: Int
-	xm :: Int
+	const cache :: Matrix{Vector{ELT}}
+	const pos :: Pos
+	const r2 :: Float64
+	const top :: Int
+	const left :: Int
+	const ym :: Int
+	const xm :: Int
 	i :: Int
 	j :: Int
 end
