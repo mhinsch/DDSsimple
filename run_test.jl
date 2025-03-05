@@ -13,15 +13,23 @@ function run_once(pars)
 
 	t = 1.0
 
-    data = observe(Data, model.world, t, model.pars)
 
 	while t < model.pars.t_max
 		step_until!(model, t) # run internal scheduler up to the next time step
-	    data = observe(Data, model.world, t, model.pars)
 		t += 1
 	end
 
-    data
+    observe(Data, model.world, t, model.pars)
+end
+
+
+function run_nth(parspace, n)
+    p = nth_point(parspace, n)
+    if p == nothing
+        error("no such point")
+    end
+    pars = apply_values!(Pars(), p)
+    run_once(pars), p
 end
 
 

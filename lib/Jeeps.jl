@@ -5,7 +5,7 @@ using Base.Iterators
 
 
 export default!, par!, ParSpace
-export points_on_axis, points_in_space
+export points_on_axis, points_in_space, nth_point
 export get_values, get_col_names_types 
 export to_cmdl_args, apply_values!, add_to_df!, create_df_cols!, create_df!
 
@@ -81,6 +81,17 @@ end
 
 
 points_in_space(j :: ParSpace) = product(points_on_axis.(j.pcs)...)
+
+function nth_point(j :: ParSpace, n)
+	i = 1
+	for p in points_in_space(j)
+		if i == n
+			return p
+		end
+		i += 1
+	end
+	nothing
+end
 
 
 par!(j, pc) = push!(j.pcs, pc)
@@ -161,7 +172,7 @@ function get_pc_values(pc)
 	ret
 end
 
-add_to_df!(pc, df) = push!(df, get_pc_values(pc))
+add_to_df!(df, pc) = push!(df, get_pc_values(pc))
 
 
 function to_cmdl_args(j :: ParSpace, prefix, sep = " ")
