@@ -1,7 +1,7 @@
 using CSV
 
 
-include("run_test.jl")
+include("run_sets.jl")
 
 
 function run_batch(ps, range, outf)

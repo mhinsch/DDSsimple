@@ -11,15 +11,9 @@ function run_once(pars)
     Random.seed!(pars.seed)    
     model = setup(pars)
 
-	t = 1.0
+	step_until!(model, model.pars.t_max) # run internal scheduler up to the next time step
 
-
-	while t < model.pars.t_max
-		step_until!(model, t) # run internal scheduler up to the next time step
-		t += 1
-	end
-
-    observe(Data, model.world, t, model.pars)
+    observe(Data, model.world, model.pars.t_max, model.pars)
 end
 
 
@@ -33,7 +27,7 @@ function run_nth(parspace, n)
 end
 
 
-function run_all(parspace, verbose = false)
+function run_all_by_seed(parspace, verbose = false)
     df = create_dataframe!(Data, DataFrame())
     df.seed = Int[]
     for seed in 1:10
@@ -57,7 +51,7 @@ function run_all(parspace, verbose = false)
 end
 
 
-function run_all_threaded(parspace)
+function run_all_threaded_by_seed(parspace)
     dfs = [DataFrame() for i in 1:10]
     pardf = create_df!(parspace, DataFrame())
     @threads for seed in 1:10
