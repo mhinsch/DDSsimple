@@ -57,7 +57,7 @@ function run(model, gui, graphs, logfile, max_step = 0.1)
 				step *= 1.1                # max step size to about 1
 			end
 
-			println(t)
+			ticker(stdout, data)
 		end
 
 		event_ref = Ref{SDL_Event}()

@@ -32,6 +32,9 @@ function draw_world(canvas, model)
 
 	wc = model.world.weather_cache.data
 
+	r1_wth = floor(Int, model.pars.spread_weather/zoomx)
+	r2_wth = floor(Int, model.pars.rad_weather/zoomx)
+
 	for y in 1:size(wc)[1], x in 1:size(wc)[2]
 		for w in wc[y, x]
 			p = w.pos ./ (zoomy, zoomx)
@@ -40,23 +43,26 @@ function draw_world(canvas, model)
 				red(floor(UInt32, -w.effect * 250)) :
 				green(floor(UInt32, w.effect * 250)) 
 
-			circle_fill(canvas, floor(Int, p[2]), floor(Int, p[1]),
-				floor(Int, model.pars.spread_weather/zoomx), UInt32(col), true)
-			circle(canvas, floor(Int, p[2]), floor(Int, p[1]),
-				floor(Int, model.pars.rad_weather/zoomx), UInt32(col), true)
+			circle_fill(canvas, floor(Int, p[2]), floor(Int, p[1]), r1_wth, UInt32(col), true)
+			circle(canvas, floor(Int, p[2]), floor(Int, p[1]), r2_wth, UInt32(col), true)
 		end
 	end
 
 
 	pc = model.world.pop_cache.data
 
+	r1_p = 1
+	r2_p = floor(Int, model.pars.spread_exchange/zoomx)
+
 	for y in 1:size(pc)[1], x in 1:size(pc)[2]
 		for a in pc[y, x]
 			p = a.pos ./ (zoomy, zoomx)
 
 			col = rgb(a.coop*150+105, a.coop*150+105, 255)
+			col2 = rgb(100, 100, 100)
 			
-			circle_fill(canvas, floor(Int, p[1]), floor(Int, p[2]), 2, col, true)
+			circle_fill(canvas, floor(Int, p[1]), floor(Int, p[2]), r1_p, col, true)
+			circle(canvas, floor(Int, p[1]), floor(Int, p[2]), r2_p, col2, true)
 		end
 	end
 	

@@ -15,6 +15,9 @@ const MMA = MaxMinAcc{Float64}
         @stat("outside", CountAcc) <| (euc_dist(p.pos, pars.sz./2) > 200.0)
         @stat("donors", CountAcc) <| (p.exchange < 0.0)
         @stat("donees", CountAcc) <| (p.exchange > 0.0)
+        if p.exchange != 0
+            @stat("exchange", MVA) <| abs(p.exchange)
+        end
         @stat("prov", MVA) <| provision(p, pars)
         @stat("coop", MVA) <| p.coop
     end
@@ -23,5 +26,5 @@ end
 
 function ticker(out, data)
     um = data.outside.n / data.N.n
-    println(out, "$(data.time) - N: $(data.N.n), out: $um")
+    println(out, "$(data.time) - N: $(data.N.n), out: $um, ex: $(data.exchange.mean)")
 end
