@@ -2,7 +2,7 @@
 using MiniEvents
 
 include("util.jl")
-include("stupider.jl")
+include("processes.jl")
 include("main_util.jl")
 include("analysis.jl")
 
