@@ -29,7 +29,7 @@ const MMA = MaxMinAcc{Float64}
         push!(exch, p.exchange)
     end
 
-    @record "cor_de" Float64 cor(dens, exch)
+    @record "cor_de" Float64 (isempty(dens) ? 0.0 : cor(dens, exch))
 end
 
 
