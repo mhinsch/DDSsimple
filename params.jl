@@ -43,6 +43,8 @@
 	"sd of stepsize"
 	theta_mig :: Float64 = 0.5
 
+	"exchange rate model: 1 - provision, 2 - local condition"
+	exchange_mode :: Int = 1
 	"sd of exchange distance"
 	spread_exchange :: Float64 = 10
 	"maximum exchange distance"

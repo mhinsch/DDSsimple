@@ -35,7 +35,14 @@ end
 	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * provision(donor, pars) *
 	donor.coop
 @inline exchange_rate(person, pars) =
-	max(0.0, -provision(person, pars)) * pars.r_exch
+	if pars.exchange_mode == 1
+		max(0.0, -provision(person, pars)) * pars.r_exch
+	elseif pars.exchange_mode == 2
+		max(0.0, -person.local_cond) * pars.r_exch
+	else
+		error("unknown exchange mode")
+		0.0
+	end
 
 @inline density(p1, p2, pars) = gaussian((p1.-p2)..., pars.spread_density)
 
