@@ -1,4 +1,5 @@
 using MiniObserve
+using Statistics
 
 # mean and variance
 const MVA = MeanVarAcc{Float64}
@@ -9,6 +10,8 @@ const MMA = MaxMinAcc{Float64}
 @observe Data world t pars begin
     @record "time" Float64 t
 
+    dens = Float64[]
+    exch = Float64[]
 
     for p in iter_cache(world.pop_cache)
         @stat("N", CountAcc) <| true
@@ -19,8 +22,14 @@ const MMA = MaxMinAcc{Float64}
             @stat("exchange", MVA) <| abs(p.exchange)
         end
         @stat("prov", MVA) <| provision(p, pars)
+        @stat("density", MVA) <| p.density
         @stat("coop", MVA) <| p.coop
+
+        push!(dens, p.density)
+        push!(exch, p.exchange)
     end
+
+    @record "cor_de" Float64 cor(dens, exch)
 end
 
 
