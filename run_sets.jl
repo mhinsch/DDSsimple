@@ -11,7 +11,10 @@ function run_once(pars)
     Random.seed!(pars.seed)    
     model = setup(pars)
 
-	step_until!(model, model.pars.t_max) # run internal scheduler up to the next time step
+	for t in 1:model.pars.t_max
+		println(t)
+		step_until!(model, t) # run internal scheduler up to the next time step
+	end
 
     observe(Data, model.world, model.pars.t_max, model.pars)
 end
