@@ -35,5 +35,5 @@ end
 
 function ticker(out, data)
     um = data.outside.n / data.N.n
-    println(out, "$(data.time) - N: $(data.N.n), out: $um, ex: $(data.exchange.mean)")
+    println(out, "$(data.time) - N: $(data.N.n), out: $um, prov: $(data.prov.mean) ex: $(data.exchange.mean)")
 end
