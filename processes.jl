@@ -11,11 +11,12 @@ include("model.jl")
 @inline provision(person, pars) = person.exchange + person.local_cond -
 	person.density / pars.capacity
 	
-@inline repr_rate(person, pars) =
-	(1.0-pars.eff_prov_repr + pars.eff_prov_repr * max(0.0, provision(person, pars))) * pars.r_repr
+@inline repr_rate(person, pars) = pars.c_repr * 
+	(1.0-pars.eff_prov_repr +
+	pars.eff_prov_repr * sigmoid(max(0.0, provision(person, pars)), pars.shape_prov_repr)) 
 	
-@inline death_rate(person, pars) = pars.r_death + 
-	pars.eff_prov_death * max(0.0, 1.0-provision(person, pars)) * pars.r_starve
+@inline death_rate(person, pars) = pars.r_death + pars.r_starve * 
+	pars.eff_prov_death * sigmoid(max(0.0, 1.0-provision(person, pars)), pars.shape_prov_death)  
 
 
 @inline move_rate(person, pars) = pars.r_move
