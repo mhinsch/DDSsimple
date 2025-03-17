@@ -33,8 +33,14 @@ end
 Graph{T}(col) where {T} = Graph{T}([], typemin(T), typemax(T), col)
 
 function add_value!(graph::Graph, value)
+	if isnan(value) || isinf(value)
+		value = zero(value)
+	end
+	
 	push!(graph.data, value)
-	value > graph.max ? (graph.max = value) : (value < graph.min ? (graph.min = value) : value)
+	
+	graph.max = max(graph.max, value)
+	graph.min = min(graph.min, value)
 end
 
 

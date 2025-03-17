@@ -69,14 +69,18 @@ function draw_world(canvas, model)
 	circle(canvas, xs ÷ 2, ys ÷ 2, floor(Int, 200/zoomx), rgb(0, 255, 0), true)
 end
 
-# draw both panels to video memory
-function draw(model, graphs, gui)
-	clear!(gui.canvas)
-	draw_world(gui.canvas, model)
-	update!(gui.panels[1,1], gui.canvas)
 
-	clear!(gui.canvas)
-	draw_graph(gui.canvas, graphs)
-	update!(gui.panels[2, 1], gui.canvas)
+function draw(model, graphs1, graphs2, gui)
+	redraw_at!(gui, 1) do canvas
+		draw_world(canvas, model)
+	end
+
+	redraw_at!(gui, 2) do canvas
+		draw_graph(canvas, graphs1)
+	end
+
+	redraw_at!(gui, 3) do canvas
+		draw_graph(canvas, graphs2)
+	end
 end
 
