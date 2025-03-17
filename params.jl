@@ -24,8 +24,12 @@
 	
 	"effect of provisioning on reproduction (0-1)"
 	eff_prov_repr :: Float64 = 1.0
+	"nonlinear effects of provision on reproduction (1=neutral)"
+	shape_prov_repr :: Float64 = 1.0
 	"effect of provisioning on death (0-1)"
 	eff_prov_death :: Float64 = 0.0
+	"nonlinear effects of provision on death (1=neutral)"
+	shape_prov_death :: Float64 = 1.0
 	
 	"carrying capacity"
 	capacity :: Float64 = 5.0
@@ -70,7 +74,7 @@
 	"max range of effect of weather"
 	rad_weather :: Float64 = 30.0
 	"min and max value of weather influence on capacity"
-	wth_range :: Vector{Float64} = [-1.0, 0.2]
+	wth_range :: Vector{Float64} = [-1.0, 0.0]
 
 	"random seed"
 	seed :: Int = 41

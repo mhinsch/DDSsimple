@@ -26,6 +26,13 @@ sq_dist(a, b) = sum((a[1]-b[1], a[2]-b[2]).^2)
 euc_dist(a, b) = sqrt(sq_dist(a, b))
 
 
+function sigmoid(x, alpha, mid=0.5)
+	c = mid/(1.0-mid)
+	xa = x^alpha
+	xa/(((1.0-x)*c)^alpha + xa)
+end
+
+
 const Pos = Tuple{Float64, Float64}
 
 

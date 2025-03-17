@@ -17,7 +17,7 @@
 
 module SimpleGui
 
-export setup_window, Panel, update!, render!, Gui, setup_Gui, SDL2
+export setup_window, Panel, update!, render!, Gui, setup_Gui, SDL2, redraw_at!
 
 using SimpleDirectMediaLayer.LibSDL2
 
@@ -42,69 +42,112 @@ end
 
 # one panel + an associated texture matching the window format
 struct Panel
+	texture :: Ptr{SDL_Texture}
 	rect :: Ref{SDL_Rect}
-	texture
-	renderer
 end
 
-function Panel(renderer, sizex, sizey, offs_x, offs_y)
-	Panel(
-		Ref(SDL_Rect(offs_x, offs_y, sizex, sizey)),
-		SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 
-			Int32(SDL_TEXTUREACCESS_STREAMING), Int32(sizex), Int32(sizey)),
-		renderer
-	)
+function Panel(texture, sizex, sizey, offs_x, offs_y)
+	Panel(texture, Ref(SDL_Rect(offs_x, offs_y, sizex, sizey)))
 end
 
 
 # copy buffer to panel texture
 function update!(p :: Panel, buf)
-	SDL_UpdateTexture(p.texture, C_NULL, buf, Int32(p.rect[].w * 4))
+	SDL_UpdateTexture(p.texture, p.rect, buf, Int32(p.rect[].w * 4))
 end
 
 # overload for canvas
 update!(p :: Panel, c :: Canvas) = update!(p, c.pixels)
 
 # draw texture on screen
-function render!(p :: Panel)
-	SDL_RenderCopy(p.renderer, p.texture, C_NULL, pointer_from_objref(p.rect))
-end
+#function render!(p :: Panel)
+#	SDL_RenderCopy(p.renderer, p.texture, C_NULL, pointer_from_objref(p.rect))
+#end
 
 
 # everything put together
 struct Gui
-	panels :: Matrix{Panel}
-	canvas :: Canvas
-	canvas_bg :: Canvas
+ 	renderer :: Ptr{SDL_Renderer}
+	texture :: Ptr{SDL_Texture}
+	rect :: Ref{SDL_Rect}
+	panels :: Vector{Panel}
+	canvases :: Vector{Canvas}
 end
 
 
 # setup the gui (incl. windows) and return a gui object
-function setup_Gui(title, panel_w = 640, panel_h = 640, x=2, y=2)
+function setup_Gui(title, width = 640, height = 640, panel_desc...)
+	renderer = setup_window(width, height, title)
+	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 
+			Int32(SDL_TEXTUREACCESS_STREAMING), Int32(width), Int32(height))
+
+	mx = maximum(p->last(p[1]), panel_desc)
+	my = maximum(p->last(p[2]), panel_desc)
+
+	xunit = width÷mx
+	@assert width % mx == 0
+	yunit = height÷my
+	@assert height % my == 0
+	
+	panels = Panel[]
+	canvases = Canvas[]
+	
+	for p in panel_desc
+		x1 = first(p[1])
+		x2 = last(p[1])
+		y1 = first(p[2])
+		y2 = last(p[2])
+
+		panel_w = (x2-x1 + 1) * xunit
+		@assert panel_w > 0
+		
+		panel_h = (y2-y1 + 1) * yunit
+		@assert panel_h > 0
+
+		panel = Panel(texture, panel_w, panel_h, (x1-1)*xunit, (y1-1)*yunit)
+		canvas = Canvas(panel_w, panel_h)
+		push!(panels, panel)
+		push!(canvases, canvas)
+	end
+
+	Gui(renderer, texture, Ref(SDL_Rect(0, 0, width, height)), panels, canvases)
+end
+
+
+function redraw_at!(fn, gui, idx)
+	clear!(gui.canvases[idx])
+	fn(gui.canvases[idx])
+	update!(gui.panels[idx], gui.canvases[idx])
+	nothing
+end
+
+
+# setup the gui (incl. windows) and return a gui object
+function setup_Gui_old(title, panel_w = 640, panel_h = 640, x=2, y=2)
 	win_w = panel_w * x
 	win_h = panel_h * y
 
 	renderer = setup_window(win_w, win_h, title)
 
 	canvas = Canvas(panel_w, panel_h)
-	canvas_bg = Canvas(panel_w, panel_h)
 
 	panels = Matrix{Panel}(undef, x, y)
 	for i in 1:x, j in 1:y
 		panels[i, j] = Panel(renderer, panel_w, panel_h, (i-1) * panel_w, (j-1) * panel_h)
 	end
 
-	Gui(panels, canvas, canvas_bg)
+	Gui(panels, canvas)
 end
 
 
 # draw all panels to the screen
 function render!(gui)
-	SDL_RenderClear(gui.panels[1].renderer)
-	for p in gui.panels
-		render!(p)
-	end
-    SDL_RenderPresent(gui.panels[1].renderer)
+	SDL_RenderClear(gui.renderer)
+	SDL_RenderCopy(gui.renderer, gui.texture, C_NULL, pointer_from_objref(gui.rect))
+	#for p in gui.panels
+	#	render!(p)
+	#end
+    SDL_RenderPresent(gui.renderer)
 end
 
 
