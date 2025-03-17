@@ -74,7 +74,7 @@
 	"max range of effect of weather"
 	rad_weather :: Float64 = 30.0
 	"min and max value of weather influence on capacity"
-	wth_range :: Vector{Float64} = [-1.0, 0.2]
+	wth_range :: Vector{Float64} = [-1.0, 0.0]
 
 	"random seed"
 	seed :: Int = 41
