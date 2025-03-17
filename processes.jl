@@ -11,16 +11,27 @@ include("model.jl")
 @inline provision(person, pars) = person.exchange + person.local_cond -
 	person.density / pars.capacity
 	
+
 @inline repr_rate(person, pars) = pars.r_repr * 
 	(1.0-pars.eff_prov_repr +
 	pars.eff_prov_repr * sigmoid(limit(0.0, provision(person, pars), 1.0), pars.shape_prov_repr)) 
 	
 @inline death_rate(person, pars) = pars.r_death + pars.r_starve * 
-	pars.eff_prov_death * sigmoid(limit(0.0, 1.0-provision(person, pars), 1.0), pars.shape_prov_death)  
-
+	pars.eff_prov_death * sigmoid(limit(0.0, -provision(person, pars), 1.0), pars.shape_prov_death)  
 
 @inline move_rate(person, pars) = pars.r_move
 
+@inline exchange_rate(person, pars) =
+	if pars.exchange_mode == 1
+		max(0.0, -provision(person, pars)) * pars.r_exch
+	elseif pars.exchange_mode == 2
+		max(0.0, -person.local_cond) * pars.r_exch
+	else
+		error("unknown exchange mode")
+		0.0
+	end
+
+	
 function rand_mig_dist(pars)
 	if pars.move_mode == 1
 		rand() * 2 * pars.theta_mig + pars.mu_mig - pars.theta_mig
@@ -35,15 +46,6 @@ end
 @inline exchange_weight(donee, donor, pars) =
 	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * provision(donor, pars) *
 	donor.coop
-@inline exchange_rate(person, pars) =
-	if pars.exchange_mode == 1
-		max(0.0, -provision(person, pars)) * pars.r_exch
-	elseif pars.exchange_mode == 2
-		max(0.0, -person.local_cond) * pars.r_exch
-	else
-		error("unknown exchange mode")
-		0.0
-	end
 
 @inline density(p1, p2, pars) = gaussian((p1.-p2)..., pars.spread_density)
 
