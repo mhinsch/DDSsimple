@@ -17,7 +17,9 @@
 
 module SimpleGraph
 
-export Graph, add_value!, draw_graph
+using FreeTypeAbstraction
+
+export Graph, add_value!, draw_graph, set_data!
 
 using SSDL
 
@@ -43,6 +45,13 @@ function add_value!(graph::Graph, value)
 	graph.min = min(graph.min, value)
 end
 
+function set_data!(graph::Graph, data; maxm = data[1], minm = data[1])
+    graph.data = data
+    graph.max = maxm == data[1] ? maximum(data) : maxm
+    graph.min = minm == data[1] ? minimum(data) : minm
+end
+    
+
 
 # draw graph to canvas
 function draw_graph(canvas, graphs, single_scale=true)
@@ -51,6 +60,12 @@ function draw_graph(canvas, graphs, single_scale=true)
 		min_all = mapreduce(g -> g.min, min, graphs)
 	end
 
+	font = findfont("sans")
+
+	matr = reshape(canvas.pixels, canvas.xsize, canvas.ysize) |> transpose
+
+	renderstring!(matr, "bla", font, 30, 50, 50)
+	
 	for g in graphs
 		g_max = single_scale ? max_all : g.max
 		g_min = single_scale ? min_all : g.min
