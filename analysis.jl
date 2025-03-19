@@ -22,7 +22,7 @@ const MMA = MaxMinAcc{Float64}
 
         d = euc_dist(p.pos, pars.sz./2)  
 
-        @stat("dist", HistAcc{Float64}(10.0, 2.0)) <| d
+        @stat("dist", HistAcc{Float64}(10.0, 2.0), MMA) <| d
 
         if d > 200.0
             @stat("outside", CountAcc) <| true
