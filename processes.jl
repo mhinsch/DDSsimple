@@ -19,7 +19,8 @@ include("model.jl")
 @inline death_rate(person, pars) = pars.r_death + pars.r_starve * 
 	pars.eff_prov_death * sigmoid(limit(0.0, -provision(person, pars), 1.0), pars.shape_prov_death)  
 
-@inline move_rate(person, pars) = pars.r_move
+@inline move_rate(person, pars) =
+	(1-pars.dd_move + pars.dd_move*person.density/pars.capacity) * pars.r_move
 
 @inline exchange_rate(person, pars) =
 	if pars.exchange_mode == 1
@@ -42,10 +43,6 @@ function rand_mig_dist(pars)
 	end
 end
 	
-
-@inline exchange_weight(donee, donor, pars) =
-	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * provision(donor, pars) *
-	donor.coop
 
 @inline density(p1, p2, pars) = gaussian((p1.-p2)..., pars.spread_density)
 
@@ -174,6 +171,10 @@ function remove_weather!(world, weather, pars)
 end
 
 
+@inline exchange_weight(donee, donor, pars) =
+	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * provision(donor, pars) *
+	donor.coop
+
 function exchange!(person, world, pars)
 	pot_donors = Person[]
 	weights = Float64[]
@@ -222,7 +223,7 @@ function setup(pars)
 		Cache2D{Person}(floor.(Int, pars.sz./cache_zoom) .+ 1, cache_zoom),
 		Cache2D{Weather}(floor.(Int, pars.sz./cache_zoom) .+ 1, cache_zoom))
 
-	sim = Sim(world, pars, 0)
+	sim = Sim(world, pars, 0, 0, 0)
 	
 	pop = Person[]
 	for i in 1:pars.n_ini

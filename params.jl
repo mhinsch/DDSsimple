@@ -46,6 +46,8 @@
 	mu_mig :: Float64 = 0.0
 	"sd of stepsize"
 	theta_mig :: Float64 = 0.5
+	"density dependence of move rate"
+	dd_move :: Float64 = 0.0
 
 	"exchange rate model: 1 - provision, 2 - local condition"
 	exchange_mode :: Int = 1
