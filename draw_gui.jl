@@ -58,11 +58,13 @@ function draw_world(canvas, model)
 		for a in pc[y, x]
 			p = a.pos ./ (zoomy, zoomx)
 
-			col = rgb(a.coop*150+105, a.coop*150+105, 255)
+			#col = rgb(a.coop*150+105, a.coop*150+105, 255)
+			prov = limit(-1.0, provision(a, model.pars), 1.0)
+			col = rgb(150, prov*125+130, 130-prov*125)
 			col2 = rgb(100, 100, 100)
 			
 			circle_fill(canvas, floor(Int, p[1]), floor(Int, p[2]), r1_p, col, true)
-			circle(canvas, floor(Int, p[1]), floor(Int, p[2]), r2_p, col2, true)
+			#circle(canvas, floor(Int, p[1]), floor(Int, p[2]), r2_p, col2, true)
 		end
 	end
 	
@@ -70,7 +72,7 @@ function draw_world(canvas, model)
 end
 
 
-function draw(model, graphs1, graphs2, gui)
+function draw(model, graphs1, graphs2, graphs3, gui)
 	redraw_at!(gui, 1) do canvas
 		draw_world(canvas, model)
 	end
@@ -81,6 +83,10 @@ function draw(model, graphs1, graphs2, gui)
 
 	redraw_at!(gui, 3) do canvas
 		draw_graph(canvas, graphs2)
+	end
+	
+	redraw_at!(gui, 4) do canvas
+		draw_graph(canvas, graphs3)
 	end
 end
 

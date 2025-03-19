@@ -9,7 +9,7 @@ include("draw_gui.jl")
 
 
 
-function run(model, gui, graphs1, graphs2, logfile, max_step = 0.1)
+function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
 	t = 1.0
 	step = max_step
 	last = 0
@@ -38,14 +38,13 @@ function run(model, gui, graphs1, graphs2, logfile, max_step = 0.1)
 					add_value!(graphs1[3], data.donors.n)
 					add_value!(graphs1[4], data.donees.n)
 
-					add_value!(graphs2[1], data.coop.mean)
-					add_value!(graphs2[2], data.cor_coop)
-					add_value!(graphs2[3], data.cor_coop_de)
+					add_value!(graphs2[2], data.cor_cond_prov)
+					add_value!(graphs2[3], data.cor_dens_prov)
 					add_value!(graphs2[4], 0.0)
-					
-					#add_value!(graphs[2], count(ag -> ag.status == infected, model.pop))
-					#add_value!(graphs[3], count(ag -> ag.status == immune, model.pop))
-					#add_value!(graphs[4], count(ag -> ag.status == dead, model.pop))
+
+					set_data!(graphs3[1], map(enumerate(data.dist.bins)) do (i,d)
+						d/(2*i+4.5)
+						end)
 				end
 				# remember when we did the last data output
 				last = now
@@ -64,6 +63,7 @@ function run(model, gui, graphs1, graphs2, logfile, max_step = 0.1)
 			end
 
 			ticker(stdout, data)
+			#println("p_ex: $(model.n_x / (model.n_x+model.n_no_x))")
 		end
 
 		event_ref = Ref{SDL_Event}()
@@ -88,7 +88,7 @@ function run(model, gui, graphs1, graphs2, logfile, max_step = 0.1)
 		end
 
 		# draw gui to video memory
-		draw(model, graphs1, graphs2, gui)
+		draw(model, graphs1, graphs2, graphs3, gui)
 		# copy to screen
 		render!(gui)
 	end
@@ -98,12 +98,12 @@ end
 const model, logf = prepare_model(ARGS) 
 
 # two 640x640 panels next to each other
-const gui = setup_Gui("SRM", 2000, 1000, (1, 1:2), (2, 1), (2, 2))
+const gui = setup_Gui("SRM", 2000, 1002, (1, 1:3), (2, 1), (2, 2), (2,3))
 const graphs1 = [Graph{Int}(green(255)), Graph{Int}(red(255)), Graph{Int}(blue(255)), Graph{Int}(WHITE)] 
 const graphs2 = [Graph{Float64}(green(255)), Graph{Float64}(red(255)), Graph{Float64}(blue(255)), Graph{Float64}(WHITE)] 
+const graphs3 = [Graph{Float64}(WHITE)]
 
-
-run(model, gui, graphs1, graphs2, logf)
+run(model, gui, graphs1, graphs2, graphs3, logf)
 
 
 close(logf)

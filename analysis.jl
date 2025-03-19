@@ -12,14 +12,17 @@ const MMA = MaxMinAcc{Float64}
 
     dens = Float64[]
     exch = Float64[]
-
+    prov = Float64[]
     dist = Float64[]
     coop = Float64[]
+    cond = Float64[]
 
     for p in iter_cache(world.pop_cache)
         @stat("N", CountAcc) <| true
 
         d = euc_dist(p.pos, pars.sz./2)  
+
+        @stat("dist", HistAcc{Float64}(10.0, 2.0)) <| d
 
         if d > 200.0
             @stat("outside", CountAcc) <| true
@@ -42,15 +45,19 @@ const MMA = MaxMinAcc{Float64}
 
         push!(dens, p.density)
         push!(exch, p.exchange)
+        push!(prov, provision(p, pars))
+        push!(cond, p.local_cond)
     end
 
-    @record "cor_de" Float64 (isempty(dens) ? 0.0 : cor(dens, exch))
-    @record "cor_coop" Float64 (isempty(dist) ? 0.0 : cor(dist, coop))
-    @record "cor_coop_de" Float64 (isempty(dens) ? 0.0 : cor(dens, coop))
+    @record "cor_dens_exch" Float64 (isempty(dens) ? 0.0 : cor(dens, exch))
+    @record "cor_dens_prov" Float64 (isempty(dens) ? 0.0 : cor(dens, prov))
+    @record "cor_cond_prov" Float64 (isempty(cond) ? 0.0 : cor(cond, prov))
+    @record "cor_dist_coop" Float64 (isempty(dist) ? 0.0 : cor(dist, coop))
+    @record "cor_dens_coop" Float64 (isempty(dens) ? 0.0 : cor(dens, coop))
 end
 
 
 function ticker(out, data)
     um = data.outside.n / data.N.n
-    println(out, "$(data.time) - N: $(data.N.n), out: $um, prov: $(data.prov.mean) ex: $(data.exchange.mean)")
+    println(out, "$(data.time) - N: $(data.N.n), dens: $(data.density.mean), prov: $(data.prov.mean) ex: $(data.exchange.mean)")
 end

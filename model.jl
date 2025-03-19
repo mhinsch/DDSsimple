@@ -30,6 +30,8 @@ end
 	@debug
 
 	@rate(repr_rate(person, @sim().pars)) ~ true => begin
+		person.exchange != 0.0 ? @sim().n_x += 1 : @sim().n_no_x += 1
+			
 		child = reproduce!(person, @sim().world, @sim().pars)
 		affected = Person[]
 		adj_density_arrive!(child, affected, @sim().world, @sim().pars)
@@ -41,6 +43,8 @@ end
 	end
 
 	@rate(death_rate(person, @sim().pars)) ~ true => begin
+		person.exchange != 0.0 ? @sim().n_x += 1 : @sim().n_no_x += 1
+			
 		# removes person from cache, so won't be affected by density change
 		die!(person, @sim().world, @sim().pars)
 		
@@ -118,4 +122,6 @@ end
 	world :: World
 	pars :: Pars
 	N :: Int
+	n_x :: Int
+	n_no_x :: Int
 end
