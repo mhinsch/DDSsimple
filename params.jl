@@ -1,8 +1,10 @@
 
 "Model parameters"
 @kwdef mutable struct Pars
-	"world size"
-	sz :: Pos = 1000.0, 1000.0
+	"world size x"
+	sz_x :: Float64 = 1000.0
+	"world size y"
+	sz_y :: Float64 = 1000.0
 	"initial pop size"
 	n_ini :: Int = 200
 	"y location of initial pop"
@@ -10,7 +12,10 @@
 	"x location of initial pop"
 	ini_x :: Float64 = 100.0
     ini_coop :: Vector{Float64} = [0.0, 1.0]
-	
+
+	"max range of spatial effects (in multiple of sd)"
+	effect_radius :: Float64 = 3.0
+    
 	"reproduction rate"
 	r_repr :: Float64 = 0.1
 	"natural ibackground mortality"
@@ -35,8 +40,6 @@
 	capacity :: Float64 = 5.0
 	"sd of influence of density"
 	spread_density :: Float64 = 5.0
-	"max range of influence of density"
-	rad_density :: Float64 = 15.0
 
 	"whether agents are stopped at the edge or disappear"
 	open_edge :: Bool = true
@@ -55,14 +58,14 @@
 	exchange_mode :: Int = 1
 	"sd of exchange distance"
 	spread_exchange :: Float64 = 10
-	"maximum exchange distance"
-	rad_exchange :: Float64 = 30
 	"proportion of resources that get exchanged"
 	prop_exchange :: Float64 = 0.5
 	"efficiency of exchange"
 	eff_exchange :: Float64 = 0.9
 	"rate at which resources get reset to default"
 	r_reset_prov :: Float64 = 1.0
+	"whether to cap donations at amount needed"
+	cap_donations :: Bool = false
 
 	"'mutation' rate"
 	r_mut :: Float64 = 0.05
@@ -75,8 +78,6 @@
 
 	"sd of effect of weather"
 	spread_weather :: Float64 = 10.0
-	"max range of effect of weather"
-	rad_weather :: Float64 = 30.0
 	"min and max value of weather influence on capacity"
 	wth_range :: Vector{Float64} = [-1.0, 0.0]
 
