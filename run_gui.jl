@@ -18,6 +18,7 @@ function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
 	pause = false
 	quit = false
 	one_frame = false
+	fullscreen = false
 	while ! quit
 		# don't do anything if we are in pause mode
 		if pause && one_frame == false
@@ -33,10 +34,13 @@ function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
 				ticker(stdout, data)
 				# in case we skipped a step (shouldn't happen, but just in case...)
 				for i in last:now
-					add_value!(graphs1[1], data.N.n)
+					set_data!(graphs1[1], [0.0, 0.0]) 
+					set_data!(graphs1[2], data.distance_all, data.provision_all)
+					set_data!(graphs1[3], data.distance_all, data.exchange_all)
+                    #=add_value!(graphs1[1], data.N.n)
 					add_value!(graphs1[2], data.outside.n)
 					add_value!(graphs1[3], data.donors.n)
-					add_value!(graphs1[4], data.donees.n)
+					add_value!(graphs1[4], data.donees.n)=#
 
 #					add_value!(graphs2[1], data.cor_cond_prov)
 #					add_value!(graphs2[2], data.cor_dens_prov)
@@ -85,6 +89,14 @@ function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
                 elseif scan_code == SDL_SCANCODE_P || scan_code == SDL_SCANCODE_SPACE
 					pause = !pause
                     break
+                elseif scan_code == SDL_SCANCODE_F 
+                	if fullscreen
+                		SDL_SetWindowFullscreen(gui.window, 0)
+                	else
+                		SDL_SetWindowFullscreen(gui.window, SDL_WINDOW_FULLSCREEN)
+                	end
+                	fullscreen = !fullscreen
+                    break
                 elseif scan_code == SDL_SCANCODE_PERIOD
                 	pause = true
                 	one_frame = true
@@ -107,19 +119,22 @@ const model, logf = prepare_model(ARGS)
 # two 640x640 panels next to each other
 const gui = setup_Gui("SRM", 2000, 1002, (1, 1:3), (2, 1), (2, 2), (2,3))
 const graphs1 = [
-	Graph{Int}(rgb(255, 255, 0), "N"),
+	Graph{Float64}(WHITE, ""), 
+	Graph{Float64}(rgb(255, 128, 0), "dist -> prov", method=:scatter),
+	Graph{Float64}(rgb(0, 240, 255), "dist -> exch", method=:scatter)]
+#=	Graph{Int}(rgb(255, 255, 0), "N"),
 	Graph{Int}(red(255), "N (out)"),
 	Graph{Int}(rgb(0, 240, 255), "donors"),
-	Graph{Int}(WHITE, "donees")] 
+	Graph{Int}(WHITE, "donees")] =#
 const graphs2 = [
 	Graph{Float64}(WHITE, ""), 
-	Graph{Float64}(rgb(255, 255, 0), "dens -> prov", method=:scatter),
-	Graph{Float64}(red(255), "dens -> exch", method=:scatter)]
+	Graph{Float64}(rgb(255, 128, 0), "dens -> prov", method=:scatter),
+	Graph{Float64}(rgb(0, 240, 255), "dens -> exch", method=:scatter)]
 
 const graphs3 = [
 	Graph{Float64}(WHITE, ""), 
-	Graph{Float64}(rgb(255, 255, 0), "cond -> prov", method=:scatter),
-	Graph{Float64}(red(255), "cond -> exch", method=:scatter)]
+	Graph{Float64}(rgb(255, 128, 0), "cond -> prov", method=:scatter),
+	Graph{Float64}(rgb(0, 240, 255), "cond -> exch", method=:scatter)]
 #const graphs3 = [Graph{Float64}(WHITE, "density", method = :scatter)]
 
 run(model, gui, graphs1, graphs2, graphs3, logf)
