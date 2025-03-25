@@ -48,6 +48,8 @@
 	theta_mig :: Float64 = 0.5
 	"density dependence of move rate"
 	dd_move :: Float64 = 0.0
+	"offset of move rate for dd move"
+	dd_r_move_0 :: Float64 = 0.5
 
 	"exchange rate model: 1 - provision, 2 - local condition"
 	exchange_mode :: Int = 1
