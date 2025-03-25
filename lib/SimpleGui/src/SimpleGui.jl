@@ -122,24 +122,6 @@ function redraw_at!(fn, gui, idx)
 end
 
 
-# setup the gui (incl. windows) and return a gui object
-function setup_Gui_old(title, panel_w = 640, panel_h = 640, x=2, y=2)
-	win_w = panel_w * x
-	win_h = panel_h * y
-
-	renderer = setup_window(win_w, win_h, title)
-
-	canvas = Canvas(panel_w, panel_h)
-
-	panels = Matrix{Panel}(undef, x, y)
-	for i in 1:x, j in 1:y
-		panels[i, j] = Panel(renderer, panel_w, panel_h, (i-1) * panel_w, (j-1) * panel_h)
-	end
-
-	Gui(panels, canvas)
-end
-
-
 # draw all panels to the screen
 function render!(gui)
 	SDL_RenderClear(gui.renderer)

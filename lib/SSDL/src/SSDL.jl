@@ -18,7 +18,7 @@
 module SSDL
 
 export Canvas, xsize, ysize, clear!, put, put_clip,line, fillRectC, linePat,
-	alpha, red, green, blue, rgb, argb, WHITE,
+	alpha, red, green, blue, rgb, argb, WHITE, argb_tuple,
 	bresenham, bresenham_circle, circle, circle_fill
 
 uint(f) = floor(UInt32, f)
@@ -116,6 +116,7 @@ blue(x::F) where {F<:AbstractFloat}  = blue(floor(UInt32, x))
 rgb(r, g, b) = red(r) | green(g) | blue(b)
 argb(a, r, g, b) = alpha(a) | red(r) | green(g) | blue(b)
 
+argb_tuple(c::UInt32) = (c .>> (24, 16, 8, 0) .& 0x000000FF) ./ 255
 
 const WHITE = 0xFFFFFFFF
 
