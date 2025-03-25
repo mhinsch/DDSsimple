@@ -6,23 +6,29 @@ const MVA = MeanVarAcc{Float64}
 # maximum, minimum
 const MMA = MaxMinAcc{Float64}
 
+const dens = Float64[]
+const exch = Float64[]
+const prov = Float64[]
+const dist = Float64[]
+const coop = Float64[]
+const cond = Float64[]
 
-@observe Data world t pars begin
+@observe DataGUI world t pars begin
     @record "time" Float64 t
 
-    dens = Float64[]
-    exch = Float64[]
-    prov = Float64[]
-    dist = Float64[]
-    coop = Float64[]
-    cond = Float64[]
+    empty!(dens)
+    empty!(exch)
+    empty!(prov)
+    empty!(dist)
+    empty!(coop)
+    empty!(cond)
 
     for p in iter_cache(world.pop_cache)
         @stat("N", CountAcc) <| true
 
         d = euc_dist(p.pos, pars.sz./2)  
 
-        @stat("dist", MMA) <| d
+        @stat("dist", HistAcc{Float64}(10.0, 2.0), MMA) <| d
 
         if d > 200.0
             @stat("outside", CountAcc) <| true
@@ -49,6 +55,13 @@ const MMA = MaxMinAcc{Float64}
         push!(cond, p.local_cond)
     end
 
+    @record "distance_all" Vector{Float64} dist
+    @record "density_all" Vector{Float64} dens
+    @record "exchange_all" Vector{Float64} exch
+    @record "provision_all" Vector{Float64} prov
+    @record "coop_all" Vector{Float64} coop
+    @record "condition_all" Vector{Float64} cond
+
     @record "cor_dens_exch" Float64 (isempty(dens) ? 0.0 : cor(dens, exch))
     @record "cor_dens_prov" Float64 (isempty(dens) ? 0.0 : cor(dens, prov))
     @record "cor_cond_prov" Float64 (isempty(cond) ? 0.0 : cor(cond, prov))
@@ -57,7 +70,7 @@ const MMA = MaxMinAcc{Float64}
 end
 
 
-function ticker(out, data)
+function ticker(out, data::DataGUI)
     um = data.outside.n / data.N.n
     println(out, "$(data.time) - N: $(data.N.n), dens: $(data.density.mean), prov: $(data.prov.mean) ex: $(data.exchange.mean)")
 end
