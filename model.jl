@@ -20,9 +20,16 @@ struct Weather
 end
 
 
+struct Obstacle
+	pos :: Pos
+	effect :: Float64
+end
+
+
 mutable struct World
 	pop_cache :: Cache2D{Person}
 	weather_cache :: Cache2D{Weather}
+	obstacle_cache :: Cache2D{Obstacle}
 end
 
 
@@ -86,6 +93,11 @@ end
 		@r person 
 	end
 
+	@rate(improvement_rate(person, @sim().pars)) ~ landscape(person, @sim().pars) < 0.0 =>
+		affected = improve_landscape!(person, @sim().world, @sim().pars)
+		@r person affected
+	end
+	
 	@rate(@sim().pars.r_reset_prov) ~ person.exchange != 0.0 => begin
 		person.exchange = 0.0
 		@r person
