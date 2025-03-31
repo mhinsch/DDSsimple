@@ -6,7 +6,7 @@ using Statistics
 include("run_sets.jl")
 
 
-allpars, args = load_parameters(ARGS, Pars)      
+const allpars, args = load_parameters(ARGS, Pars)      
 
 const parspace = ParSpace(
     :r_exch => [0.0, 1.0],
