@@ -7,11 +7,14 @@
 	sz_y :: Float64 = 1000.0
 	"initial pop size"
 	n_ini :: Int = 200
-	"y location of initial pop"
+	"y spread of initial pop"
 	ini_y :: Float64 = 100.0
-	"x location of initial pop"
+	"x spread of initial pop"
 	ini_x :: Float64 = 100.0
+	"ini range of coop values"
     ini_coop :: Vector{Float64} = [0.0, 1.0]
+    "number of landscape effects"
+    n_obst :: Int = 30000
 
 	"max range of spatial effects (in multiple of sd)"
 	effect_radius :: Float64 = 3.0
@@ -26,6 +29,8 @@
 	r_move :: Float64 = 0.01
 	"exchange rate"
 	r_exch :: Float64 = 1.0
+	"improvement rate"
+	r_improve :: Float64 = 1.0
 	
 	"effect of provisioning on reproduction (0-1)"
 	eff_prov_repr :: Float64 = 1.0
@@ -40,6 +45,8 @@
 	capacity :: Float64 = 5.0
 	"sd of influence of density"
 	spread_density :: Float64 = 5.0
+	"effect of obstacles"
+	obst_effect :: Float64 = -1.0
 
 	"whether agents are stopped at the edge or disappear"
 	open_edge :: Bool = true

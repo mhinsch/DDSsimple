@@ -48,6 +48,17 @@ function draw_world(canvas, model)
 		end
 	end
 
+	lsc = model.world.obstacle_cache.data
+
+	for y in 1:size(lsc)[1], x in 1:size(lsc)[2]
+		for l in lsc[y, x]
+			p = l.pos ./ (zoomy, zoomx)
+
+			col = blue(255)
+
+			circle_fill(canvas, floor(Int, p[2]), floor(Int, p[1]), 2, UInt32(col), true)
+		end
+	end
 
 	pc = model.world.pop_cache.data
 
@@ -72,7 +83,7 @@ function draw_world(canvas, model)
 				
 			col2 = rgb(50, 50, 50)
 			
-			circle_fill(canvas, floor(Int, p[1]), floor(Int, p[2]), r1_p, col, true)
+			circle_fill(canvas, floor(Int, p[2]), floor(Int, p[1]), r1_p, col, true)
 			#circle(canvas, floor(Int, p[1]), floor(Int, p[2]), r2_p, col2, true)
 		end
 	end

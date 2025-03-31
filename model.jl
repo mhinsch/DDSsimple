@@ -8,10 +8,11 @@ mutable struct Person
 	density :: Float64
 	local_cond :: Float64
 	exchange :: Float64
+	landscape :: Float64
 	coop :: Float64
 end
 
-Person(pos) = Person(pos, 0.0, 1.0, 0.0, 0.0)
+Person(pos) = Person(pos, 0.0, 1.0, 0.0, 0.0, 0.0)
 
 
 struct Weather
@@ -43,6 +44,7 @@ end
 		affected = Person[]
 		adj_density_arrive!(child, affected, @sim().world, @sim().pars)
 		set_weather_arrive!(child, @sim().world, @sim().pars)
+		set_landscape_arrive!(child, @sim().world, @sim().pars)
 #		println("repr: $(child.pos), $(child.density), $(child.weather)")
 		@sim().N += 1
 		@spawn child
@@ -69,6 +71,8 @@ end
 
 		affected = Person[]
 
+		person.landscape = 0.0
+
 		died = move!(person, @sim().world, @sim().pars)
 		if died
 			adj_density_leave!(person.pos, affected, @sim().world, @sim().pars)
@@ -78,6 +82,8 @@ end
 		else
 			person.local_cond = 1.0
 			set_weather_arrive!(person, @sim().world, @sim().pars)
+
+			set_landscape_arrive!(person, @sim().world, @sim().pars)
 		
 			adj_density_move!(old_pos, person, affected, @sim().world, @sim().pars)
 		end
@@ -93,7 +99,7 @@ end
 		@r person 
 	end
 
-	@rate(improvement_rate(person, @sim().pars)) ~ landscape(person, @sim().pars) < 0.0 =>
+	@rate(improvement_rate(person, @sim().pars)) ~ person.landscape < 0.0 => begin
 		affected = improve_landscape!(person, @sim().world, @sim().pars)
 		@r person affected
 	end
