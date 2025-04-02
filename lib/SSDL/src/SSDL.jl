@@ -95,7 +95,7 @@ ysize(canvas::Canvas) = canvas.ysize
 Base.size(canvas::Canvas) = xsize(canvas), ysize(canvas)
 
 
-clear!(canvas::Canvas) = fill!(canvas.pixels, 0)
+clear!(canvas::Canvas, col=0) = fill!(canvas.pixels, col)
 
 
 Base.copyto!(c1::Canvas, c2::Canvas) = copyto!(c1.pixels, c2.pixels)

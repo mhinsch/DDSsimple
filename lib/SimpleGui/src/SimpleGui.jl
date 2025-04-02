@@ -115,8 +115,8 @@ function setup_Gui(title, width = 640, height = 640, panel_desc...)
 end
 
 
-function redraw_at!(fn, gui, idx)
-	clear!(gui.canvases[idx])
+function redraw_at!(fn, gui, idx, col=0)
+	clear!(gui.canvases[idx], col)
 	fn(gui.canvases[idx])
 	update!(gui.panels[idx], gui.canvases[idx])
 	nothing
