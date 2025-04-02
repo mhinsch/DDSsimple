@@ -9,6 +9,7 @@ end
 
 using ArgParse
 using YAML
+using DataStructures
 
 add_to_load_path!(joinpath(@__DIR__, "lib"))
 
@@ -63,7 +64,7 @@ end
 
 
 function save_parameters_to_file(fname, pars...)
-    dict = pars_to_dict(pars...)
+    dict = pars_to_dict(pars..., DType=OrderedDict)
     
     YAML.write_file(fname, dict)
 end
