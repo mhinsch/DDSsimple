@@ -8,6 +8,10 @@ using SimpleGui
 
 include("draw_gui.jl")
 
+function pred(dat, reg)
+	mi, ma = extrema(dat)
+	[mi, ma] .* reg[1] .+ reg[2]
+end
 
 
 function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
@@ -36,7 +40,10 @@ function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
 				for i in last:now
 					set_data!(graphs1[1], [0.0, 0.0]) 
 					set_data!(graphs1[2], data.distance_all, data.provision_all)
-					set_data!(graphs1[3], data.distance_all, data.exchange_all)
+					set_data!(graphs1[3], data.distance_all, data.storage_all)
+					set_data!(graphs1[4], pred(data.distance_all, data.cor_dist_store))
+					set_data!(graphs1[5], data.distance_all, data.exchange_all)
+					set_data!(graphs1[6], pred(data.distance_all, data.cor_dist_exch))
                     #=add_value!(graphs1[1], data.N.n)
 					add_value!(graphs1[2], data.outside.n)
 					add_value!(graphs1[3], data.donors.n)
@@ -47,10 +54,13 @@ function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
 					set_data!(graphs2[1], [0.0, 0.0]) 
 					set_data!(graphs2[2], data.density_all, data.provision_all)
 					set_data!(graphs2[3], data.density_all, data.exchange_all)
+					set_data!(graphs2[4], data.density_all, data.storage_all)
 
-					set_data!(graphs3[1], [0.0, 0.0]) 
-					set_data!(graphs3[2], data.condition_all, data.provision_all)
-					set_data!(graphs3[3], data.condition_all, data.exchange_all)
+					set_data!(graphs3[1], data.storage.bins)
+
+					#set_data!(graphs3[1], [0.0, 0.0]) 
+					#set_data!(graphs3[2], data.condition_all, data.provision_all)
+					#set_data!(graphs3[3], data.condition_all, data.exchange_all)
 					#=set_data!(graphs3[1], map(enumerate(data.dist.bins)) do (i,d)
 						d/(2*i+4.5)
 						end)=#
@@ -120,21 +130,25 @@ const model, logf = prepare_model(ARGS)
 const gui = setup_Gui("SRM", 2000, 1002, (1, 1:3), (2, 1), (2, 2), (2,3))
 const graphs1 = [
 	Graph{Float64}(WHITE, ""), 
-	Graph{Float64}(rgb(255, 128, 0), "dist -> prov", method=:scatter),
-	Graph{Float64}(rgb(0, 240, 255), "dist -> exch", method=:scatter)]
+	Graph{Float64}(rgb(255, 198, 0), "dist -> prov", method=:scatter),
+	Graph{Float64}(rgb(255, 0, 200), "dist -> store", method=:scatter),
+	Graph{Float64}(rgb(255, 0, 200), ""),
+	Graph{Float64}(rgb(0, 240, 255), "dist -> exch", method=:scatter),
+	Graph{Float64}(rgb(0, 240, 255), "")]
 #=	Graph{Int}(rgb(255, 255, 0), "N"),
 	Graph{Int}(red(255), "N (out)"),
 	Graph{Int}(rgb(0, 240, 255), "donors"),
 	Graph{Int}(WHITE, "donees")] =#
 const graphs2 = [
 	Graph{Float64}(WHITE, ""), 
-	Graph{Float64}(rgb(255, 128, 0), "dens -> prov", method=:scatter),
-	Graph{Float64}(rgb(0, 240, 255), "dens -> exch", method=:scatter)]
+	Graph{Float64}(rgb(255, 198, 0), "dens -> prov", method=:scatter),
+	Graph{Float64}(rgb(0, 240, 255), "dens -> exch", method=:scatter),
+	Graph{Float64}(rgb(255, 0, 200), "dens -> store", method=:scatter)]
 
 const graphs3 = [
-	Graph{Float64}(WHITE, ""), 
-	Graph{Float64}(rgb(255, 128, 0), "cond -> prov", method=:scatter),
-	Graph{Float64}(rgb(0, 240, 255), "cond -> exch", method=:scatter)]
+#	Graph{Float64}(WHITE, ""), 
+	Graph{Float64}(rgb(255, 128, 0), "storage")]
+#	Graph{Float64}(rgb(0, 240, 255), "cond -> exch", method=:scatter)]
 #const graphs3 = [Graph{Float64}(WHITE, "density", method = :scatter)]
 
 run(model, gui, graphs1, graphs2, graphs3, logf)

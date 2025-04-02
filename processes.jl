@@ -8,10 +8,28 @@ include("params.jl")
 include("model.jl")	
 
 
-@inline provision(person, pars) = person.exchange + person.local_cond + person.landscape -
+function provision(person, pars)
+	sp = surplus(person, pars)
+	sp > 0 ? sp - person.storage : sp + person.storage
+end	
+# current "income"
+@inline surplus(person, pars) = person.exchange + person.local_cond + person.landscape -
 	person.density / pars.capacity
-	
 
+pot_donation(person, pars) =
+	if pars.donate_mode == 1
+		provision(person, pars)
+	elseif pars.donate_mode == 2
+		person.storage
+	else
+		error("unknown donation mode")
+		0.0
+	end
+
+@inline storage_rate(person, pars) = pars.r_store
+
+@inline storage_reset_rate(person, pars) = pars.r_store_reset
+	
 @inline repr_rate(person, pars) = pars.r_repr * 
 	(1.0-pars.eff_prov_repr +
 	pars.eff_prov_repr * sigmoid(limit(0.0, provision(person, pars), 1.0), pars.shape_prov_repr)) 
@@ -229,7 +247,7 @@ end
 
 
 @inline exchange_weight(donee, donor, pars) =
-	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * provision(donor, pars) *
+	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * pot_donation(donor, pars) *
 	donor.coop
 
 function exchange!(person, world, pars)
@@ -239,7 +257,7 @@ function exchange!(person, world, pars)
 
 	sum_w = 0.0
 	for p in iter_circle(world.pop_cache, person.pos, pars.spread_exchange*pars.effect_radius)
-		if provision(p, pars) > 0.0 && p.coop > 0.0
+		if pot_donation(p, pars) > 0.0 && p.coop > 0.0
 			push!(pot_donors, p)
 			push!(weights, exchange_weight(person, p, pars))
 			@assert weights[end] >= 0.0
@@ -254,7 +272,7 @@ function exchange!(person, world, pars)
 	s = rand() * sum_w
 	for (p,w) in zip(pot_donors, weights)
 		if s < w
-			donation = provision(p, pars) * pars.prop_exchange * p.coop
+			donation = pot_donation(p, pars) * pars.prop_exchange * p.coop
 			if pars.cap_donations
 				donation = min(donation, -provision(person, pars)/pars.eff_exchange)
 			end

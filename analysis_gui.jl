@@ -1,5 +1,5 @@
 using MiniObserve
-using Statistics
+using LinearRegression
 
 # mean and variance
 const MVA = MeanVarAcc{Float64}
@@ -12,6 +12,7 @@ const prov = Float64[]
 const dist = Float64[]
 const coop = Float64[]
 const cond = Float64[]
+const store = Float64[]
 
 @observe DataGUI world t pars begin
     @record "time" Float64 t
@@ -22,6 +23,7 @@ const cond = Float64[]
     empty!(dist)
     empty!(coop)
     empty!(cond)
+    empty!(store)
 
     for p in iter_cache(world.pop_cache)
         @stat("N", CountAcc) <| true
@@ -45,6 +47,7 @@ const cond = Float64[]
         @stat("prov", MVA) <| provision(p, pars)
         @stat("density", MVA) <| p.density
         @stat("coop", MVA) <| p.coop
+        @stat("storage", MVA, HistAcc{Float64}(0.0, 0.1, 0.0)) <| p.storage
 
         push!(dist, d)
         push!(coop, p.coop)
@@ -53,6 +56,7 @@ const cond = Float64[]
         push!(exch, p.exchange)
         push!(prov, provision(p, pars))
         push!(cond, p.local_cond)
+        push!(store, p.storage)
     end
 
     @record "distance_all" Vector{Float64} dist
@@ -61,12 +65,24 @@ const cond = Float64[]
     @record "provision_all" Vector{Float64} prov
     @record "coop_all" Vector{Float64} coop
     @record "condition_all" Vector{Float64} cond
+    @record "storage_all" Vector{Float64} store
 
-    @record "cor_dens_exch" Float64 (isempty(dens) ? 0.0 : cor(dens, exch))
-    @record "cor_dens_prov" Float64 (isempty(dens) ? 0.0 : cor(dens, prov))
-    @record "cor_cond_prov" Float64 (isempty(cond) ? 0.0 : cor(cond, prov))
-    @record "cor_dist_coop" Float64 (isempty(dist) ? 0.0 : cor(dist, coop))
-    @record "cor_dens_coop" Float64 (isempty(dens) ? 0.0 : cor(dens, coop))
+    @record "cor_dens_exch" Tuple{Float64, Float64} (isempty(dens) ?
+        (0.0, 0.0) : Tuple{Float64, Float64}(coef(linregress(dens, exch))))
+    @record "cor_dist_exch" Tuple{Float64, Float64} (isempty(dist) ?
+        (0.0, 0.0) : Tuple{Float64, Float64}(coef(linregress(dist, exch))))
+    @record "cor_dens_prov" Tuple{Float64, Float64} (isempty(dens) ?
+        (0.0, 0.0) : Tuple{Float64, Float64}(coef(linregress(dens, prov))))
+    @record "cor_cond_prov" Tuple{Float64, Float64} (isempty(cond) ?
+        (0.0, 0.0) : Tuple{Float64, Float64}(coef(linregress(cond, prov))))
+    @record "cor_dist_coop" Tuple{Float64, Float64} (isempty(dist) ?
+        (0.0, 0.0) : Tuple{Float64, Float64}(coef(linregress(dist, coop))))
+    @record "cor_dens_coop" Tuple{Float64, Float64} (isempty(dens) ?
+        (0.0, 0.0) : Tuple{Float64, Float64}(coef(linregress(dens, coop))))
+    @record "cor_dist_store" Tuple{Float64, Float64} (isempty(dist) ?
+        (0.0, 0.0) : Tuple{Float64, Float64}(coef(linregress(dist, store))))
+    @record "cor_dens_store" Tuple{Float64, Float64} (isempty(dens) ?
+        (0.0, 0.0) : Tuple{Float64, Float64}(coef(linregress(dens, store))))
 end
 
 

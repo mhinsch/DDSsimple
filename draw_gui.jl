@@ -93,19 +93,20 @@ end
 
 
 function draw(model, graphs1, graphs2, graphs3, gui)
-	redraw_at!(gui, 1) do canvas
+	bg = rgb(100, 100, 100)
+	redraw_at!(gui, 1, bg) do canvas
 		draw_world(canvas, model)
 	end
 
-	redraw_at!(gui, 2) do canvas
+	redraw_at!(gui, 2, bg) do canvas
 		draw_graph(canvas, graphs1)
 	end
 
-	redraw_at!(gui, 3) do canvas
+	redraw_at!(gui, 3, bg) do canvas
 		draw_graph(canvas, graphs2)
 	end
 	
-	redraw_at!(gui, 4) do canvas
+	redraw_at!(gui, 4, bg) do canvas
 		draw_graph(canvas, graphs3)
 	end
 end

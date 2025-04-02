@@ -31,6 +31,10 @@
 	r_exch :: Float64 = 1.0
 	"improvement rate"
 	r_improve :: Float64 = 1.0
+	"storage rate"
+	r_store :: Float64 = 1.0
+	"rate of storage reset"
+	r_store_reset :: Float64 = 1.0
 	
 	"effect of provisioning on reproduction (0-1)"
 	eff_prov_repr :: Float64 = 1.0
@@ -60,6 +64,11 @@
 	dd_move :: Float64 = 0.0
 	"offset of move rate for dd move"
 	dd_r_move_0 :: Float64 = 0.5
+
+	"donation model: 1 - provision, 2 - storage"
+	donate_mode :: Int = 1
+	"proportion of surplus to store"
+	prop_store :: Float64 = 0.5
 
 	"exchange rate model: 1 - provision, 2 - local condition"
 	exchange_mode :: Int = 1

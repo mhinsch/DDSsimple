@@ -8,11 +8,12 @@ mutable struct Person
 	density :: Float64
 	local_cond :: Float64
 	exchange :: Float64
+	storage :: Float64
 	landscape :: Float64
 	coop :: Float64
 end
 
-Person(pos) = Person(pos, 0.0, 1.0, 0.0, 0.0, 0.0)
+Person(pos) = Person(pos, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0)
 
 
 struct Weather
@@ -99,6 +100,17 @@ end
 		@r person 
 	end
 
+	@rate(storage_rate(person, @sim().pars)) ~
+		person.storage <= 0.0 && surplus(person, @sim().pars) > 0.0 => begin
+		person.storage += surplus(person, @sim().pars) * @sim().pars.prop_store
+		@r person
+	end
+
+	@rate(storage_reset_rate(person, @sim().pars)) ~ person.storage > 0.0 => begin
+		person.storage = 0.0
+		@r person
+	end
+	
 	@rate(improvement_rate(person, @sim().pars)) ~ person.landscape < 0.0 => begin
 		affected = improve_landscape!(person, @sim().world, @sim().pars)
 		@r person affected
