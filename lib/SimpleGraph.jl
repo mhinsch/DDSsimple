@@ -36,12 +36,13 @@ mutable struct Graph{T}
 	colour :: UInt32
 	label :: String
 	method :: Symbol
+	size :: Int
 end
 
-Graph{T}(col, lab; method=:line) where {T} =
+Graph{T}(col, lab; method=:line, size=2) where {T} =
 	Graph{T}([], typemin(T), typemax(T),
 		[], -Inf, Inf,
-		col, lab, method)
+		col, lab, method, size)
 
 key(graph, idx) = isempty(graph.keys) ? idx : graph.keys[idx]
 
@@ -154,7 +155,7 @@ function draw_graph(canvas, graphs, single_y_scale=true, single_x_scale=false)
 			for i in 1:length(g.data)
 				dx = x_0_g + x_coord(g, g_x_min, x_scale, i) + 1
 				dy = height_g - y_coord(g, g_min, y_scale, i) + 1
-				SSDL.circle(canvas, dx, dy, 2, g.colour, true)
+				SSDL.circle_fill(canvas, dx, dy, g.size, g.colour, true)
 			end
 		end
 	end
