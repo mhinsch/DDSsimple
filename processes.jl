@@ -13,8 +13,24 @@ function provision(person, pars)
 	sp > 0 ? sp - person.storage : sp + person.storage
 end	
 # current "income"
-@inline surplus(person, pars) = person.exchange + person.local_cond + person.landscape -
-	person.density / pars.capacity
+function surplus(person, pars)
+	density = person.density / pars.capacity
+	lc = person.local_cond
+	mode = pars.weather_density_mode
+	lc_effect =
+		if mode == 1
+			lc
+		elseif mode == 2
+			lc * (1.0-density)
+		elseif mode == 3
+			lc * abs(person.landscape)
+		else
+			error("unknown weather density mode")
+			0.0
+		end
+
+	person.exchange + lc_effect + person.landscape - density
+end
 
 pot_donation(person, pars) =
 	if pars.donate_mode == 1
