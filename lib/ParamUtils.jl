@@ -167,12 +167,12 @@ end
 
 
 "generate dict from `parameters`"
-function pars_to_dict(parameters...)
-    dict = Dict{Symbol, Any}()
+function pars_to_dict(parameters...; DType = Dict)
+    dict = DType{Symbol, Any}()
 
     for par in parameters
         ptype = typeof(par)
-        pdict = Dict{Symbol, Any}()
+        pdict = DType{Symbol, Any}()
         for n in fieldnames(ptype)
             pdict[n] = getfield(par, n)
         end

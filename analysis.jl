@@ -20,9 +20,9 @@ const MMA = MaxMinAcc{Float64}
     for p in iter_cache(world.pop_cache)
         @stat("N", CountAcc) <| true
 
-        d = euc_dist(p.pos, pars.sz./2)  
+        d = euc_dist(p.pos, (pars.sz_y, pars.sz_x)./2)  
 
-        @stat("dist", HistAcc{Float64}(10.0, 2.0), MMA) <| d
+        @stat("dist", MMA) <| d
 
         if d > 200.0
             @stat("outside", CountAcc) <| true

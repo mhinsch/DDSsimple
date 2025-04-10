@@ -36,7 +36,7 @@ function setup_window(wx, wy, title)
 		UInt32(SDL_WINDOW_SHOWN))
 	SDL_SetWindowResizable(win, SDL_FALSE)
 
-	SDL_CreateRenderer(win, Int32(-1), UInt32(SDL_RENDERER_ACCELERATED))
+	SDL_CreateRenderer(win, Int32(-1), UInt32(SDL_RENDERER_ACCELERATED)), win
 end
 
 
@@ -67,6 +67,7 @@ update!(p :: Panel, c :: Canvas) = update!(p, c.pixels)
 
 # everything put together
 struct Gui
+	window :: Ptr{SDL_Window}
  	renderer :: Ptr{SDL_Renderer}
 	texture :: Ptr{SDL_Texture}
 	rect :: Ref{SDL_Rect}
@@ -77,7 +78,7 @@ end
 
 # setup the gui (incl. windows) and return a gui object
 function setup_Gui(title, width = 640, height = 640, panel_desc...)
-	renderer = setup_window(width, height, title)
+	renderer, win = setup_window(width, height, title)
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, 
 			Int32(SDL_TEXTUREACCESS_STREAMING), Int32(width), Int32(height))
 
@@ -110,33 +111,15 @@ function setup_Gui(title, width = 640, height = 640, panel_desc...)
 		push!(canvases, canvas)
 	end
 
-	Gui(renderer, texture, Ref(SDL_Rect(0, 0, width, height)), panels, canvases)
+	Gui(win, renderer, texture, Ref(SDL_Rect(0, 0, width, height)), panels, canvases)
 end
 
 
-function redraw_at!(fn, gui, idx)
-	clear!(gui.canvases[idx])
+function redraw_at!(fn, gui, idx, col=0)
+	clear!(gui.canvases[idx], col)
 	fn(gui.canvases[idx])
 	update!(gui.panels[idx], gui.canvases[idx])
 	nothing
-end
-
-
-# setup the gui (incl. windows) and return a gui object
-function setup_Gui_old(title, panel_w = 640, panel_h = 640, x=2, y=2)
-	win_w = panel_w * x
-	win_h = panel_h * y
-
-	renderer = setup_window(win_w, win_h, title)
-
-	canvas = Canvas(panel_w, panel_h)
-
-	panels = Matrix{Panel}(undef, x, y)
-	for i in 1:x, j in 1:y
-		panels[i, j] = Panel(renderer, panel_w, panel_h, (i-1) * panel_w, (j-1) * panel_h)
-	end
-
-	Gui(panels, canvas)
 end
 
 

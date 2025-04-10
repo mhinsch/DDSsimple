@@ -8,10 +8,44 @@ include("params.jl")
 include("model.jl")	
 
 
-@inline provision(person, pars) = person.exchange + person.local_cond -
-	person.density / pars.capacity
-	
+function provision(person, pars)
+	sp = surplus(person, pars)
+	sp > 0 ? sp - person.storage : sp + person.storage
+end	
+# current "income"
+function surplus(person, pars)
+	density = person.density / pars.capacity
+	lc = person.local_cond
+	mode = pars.weather_density_mode
+	lc_effect =
+		if mode == 1
+			lc
+		elseif mode == 2
+			lc * (1.0-density)
+		elseif mode == 3
+			lc * abs(person.landscape)
+		else
+			error("unknown weather density mode")
+			0.0
+		end
 
+	person.exchange + lc_effect + person.landscape - density
+end
+
+pot_donation(person, pars) =
+	if pars.donate_mode == 1
+		provision(person, pars)
+	elseif pars.donate_mode == 2
+		person.storage
+	else
+		error("unknown donation mode")
+		0.0
+	end
+
+@inline storage_rate(person, pars) = pars.r_store
+
+@inline storage_reset_rate(person, pars) = pars.r_store_reset
+	
 @inline repr_rate(person, pars) = pars.r_repr * 
 	(1.0-pars.eff_prov_repr +
 	pars.eff_prov_repr * sigmoid(limit(0.0, provision(person, pars), 1.0), pars.shape_prov_repr)) 
@@ -20,7 +54,7 @@ include("model.jl")
 	pars.eff_prov_death * sigmoid(limit(0.0, -provision(person, pars), 1.0), pars.shape_prov_death)  
 
 @inline move_rate(person, pars) =
-	(1-pars.dd_move + pars.dd_move*person.density/pars.capacity) * pars.r_move
+	(1-pars.dd_move + pars.dd_move*(pars.dd_r_move_0 + person.density/pars.capacity)) * pars.r_move
 
 @inline exchange_rate(person, pars) =
 	if pars.exchange_mode == 1
@@ -32,6 +66,8 @@ include("model.jl")
 		0.0
 	end
 
+@inline improvement_rate(person, pars) = pars.r_improve
+	
 	
 function rand_mig_dist(pars)
 	if pars.move_mode == 1
@@ -49,9 +85,12 @@ end
 @inline weather_effect(weather, ppos, pars) =
 	weather.effect * gaussian((weather.pos.-ppos)..., pars.spread_weather)
 
+@inline landscape_effect(obst, ppos, pars) =
+	obst.effect * gaussian((obst.pos.-ppos)..., pars.spread_density)
+
 
 function adj_density_leave!(pos, affected, world, pars)
-	for person in iter_circle(world.pop_cache, pos, pars.rad_density)
+	for person in iter_circle(world.pop_cache, pos, pars.spread_density*pars.effect_radius)
 		person.density -= density(pos, person.pos, pars)
 		push!(affected, person)
 	end	
@@ -60,7 +99,7 @@ end
 
 
 function adj_density_arrive!(new_person, affected, world, pars)
-	for person in iter_circle(world.pop_cache, new_person.pos, pars.rad_density)
+	for person in iter_circle(world.pop_cache, new_person.pos, pars.spread_density*pars.effect_radius)
 		delta = density(new_person.pos, person.pos, pars)
 		@assert delta >= 0
 		person.density += delta
@@ -97,12 +136,12 @@ function move!(person, world, pars)
 	new_pos = pos[1] + dy, pos[2] + dx
 
 	if pars.open_edge
-		if !(0.0 <= new_pos[1] <= pars.sz[1] && 0.0 <= new_pos[2] <= pars.sz[2])
+		if !(0.0 <= new_pos[1] <= pars.sz_y && 0.0 <= new_pos[2] <= pars.sz_x)
 			die!(person, world, pars)
 			return true
 		end
 	else
-		new_pos = limit(0.0, new_pos[1], pars.sz[1]), limit(0.0, new_pos[2], pars.sz[2])
+		new_pos = limit(0.0, new_pos[1], pars.sz_y), limit(0.0, new_pos[2], pars.sz_x)
 	end
 
 	old_grid_pos = pos2cache_idx(world.pop_cache, pos)
@@ -134,21 +173,21 @@ end
 
 
 function set_weather_arrive!(person, world, pars)
-	for weather in iter_circle(world.weather_cache, person.pos, pars.rad_weather)
+	for weather in iter_circle(world.weather_cache, person.pos, pars.spread_weather*pars.effect_radius)
 		person.local_cond += weather_effect(weather, person.pos, pars)
 	end
 end
 
 
 function add_weather!(world, pars)
-	pos = rand() * pars.sz[1], rand() * pars.sz[2]
+	pos = rand() * pars.sz_y, rand() * pars.sz_x
 	effect = rand() * (pars.wth_range[2]-pars.wth_range[1]) + pars.wth_range[1]
 	new_weather = Weather(pos, effect)
 	add_to_cache!(world.weather_cache, new_weather, pos)
 
 	affected = Person[]
 	
-	for person in iter_circle(world.pop_cache, pos, pars.rad_weather)
+	for person in iter_circle(world.pop_cache, pos, pars.spread_weather*pars.effect_radius)
 		person.local_cond += weather_effect(new_weather, person.pos, pars)
 		push!(affected, person)
 	end	
@@ -160,7 +199,7 @@ end
 function remove_weather!(world, weather, pars)
 	affected = Person[]
 	
-	for person in iter_circle(world.pop_cache, weather.pos, pars.rad_weather)
+	for person in iter_circle(world.pop_cache, weather.pos, pars.spread_weather*pars.effect_radius)
 		person.local_cond -= weather_effect(weather, person.pos, pars)
 		push!(affected, person)
 	end	
@@ -171,17 +210,70 @@ function remove_weather!(world, weather, pars)
 end
 
 
+function set_landscape_arrive!(person, world, pars)
+	for obst in iter_circle(world.obstacle_cache, person.pos, pars.spread_density*pars.effect_radius)
+		person.landscape += landscape_effect(obst, person.pos, pars)
+	end
+end
+
+
+function remove_obstacle!(obst, world, pars)
+	affected = Person[]
+	for person in iter_circle(world.pop_cache, obst.pos, pars.spread_density*pars.effect_radius)
+		person.landscape -= landscape_effect(obst, person.pos, pars)
+		push!(affected, person)
+	end
+
+	remove_from_cache!(world.obstacle_cache, obst, obst.pos)
+
+	affected
+end
+
+
+@inline landscape_weight(person, lsc, pars) = gaussian((person.pos.-lsc.pos)..., pars.spread_density)
+
+function improve_landscape!(person, world, pars)
+	pot_obst = Obstacle[]
+	weights = Float64[]
+
+	sum_w = 0.0
+	for obst in iter_circle(world.obstacle_cache, person.pos, pars.spread_density*pars.effect_radius)
+		push!(pot_obst, obst)
+		push!(weights, landscape_weight(person, obst, pars))
+		@assert weights[end] >= 0.0
+		sum_w += weights[end]
+	end
+
+	if isempty(pot_obst)
+		return [person]
+	end
+
+	affected = Person[]
+
+	s = rand() * sum_w
+	for (l,w) in zip(pot_obst, weights)
+		if s < w
+			affected = remove_obstacle!(l, world, pars)
+			break
+		end
+	end
+
+	affected
+end
+
+
 @inline exchange_weight(donee, donor, pars) =
-	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * provision(donor, pars) *
+	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * pot_donation(donor, pars) *
 	donor.coop
 
 function exchange!(person, world, pars)
+	@assert provision(person, pars) < 0
 	pot_donors = Person[]
 	weights = Float64[]
 
 	sum_w = 0.0
-	for p in iter_circle(world.pop_cache, person.pos, pars.rad_exchange)
-		if provision(p, pars) > 0.0 && p.coop > 0.0
+	for p in iter_circle(world.pop_cache, person.pos, pars.spread_exchange*pars.effect_radius)
+		if pot_donation(p, pars) > 0.0 && p.coop > 0.0
 			push!(pot_donors, p)
 			push!(weights, exchange_weight(person, p, pars))
 			@assert weights[end] >= 0.0
@@ -196,7 +288,10 @@ function exchange!(person, world, pars)
 	s = rand() * sum_w
 	for (p,w) in zip(pot_donors, weights)
 		if s < w
-			donation = provision(p, pars) * pars.prop_exchange * p.coop
+			donation = pot_donation(p, pars) * pars.prop_exchange * p.coop
+			if pars.cap_donations
+				donation = min(donation, -provision(person, pars)/pars.eff_exchange)
+			end
 			@assert donation > 0.0
 			p.exchange -= donation
 			person.exchange += donation * pars.eff_exchange
@@ -220,21 +315,42 @@ function setup(pars)
 	Random.seed!(pars.seed)
 	cache_zoom = 5.0
 	world = World(
-		Cache2D{Person}(floor.(Int, pars.sz./cache_zoom) .+ 1, cache_zoom),
-		Cache2D{Weather}(floor.(Int, pars.sz./cache_zoom) .+ 1, cache_zoom))
+		Cache2D{Person}(floor.(Int, (pars.sz_y, pars.sz_x)./cache_zoom) .+ 1, cache_zoom),
+		Cache2D{Weather}(floor.(Int, (pars.sz_y, pars.sz_x)./cache_zoom) .+ 1, cache_zoom),
+		Cache2D{Obstacle}(floor.(Int, (pars.sz_y, pars.sz_x)./cache_zoom) .+ 1, cache_zoom))
 
 	sim = Sim(world, pars, 0, 0, 0)
+
+	ini_y_mi = pars.sz_y/2 - pars.ini_y/2
+	ini_y_ma = pars.sz_y/2 + pars.ini_y/2
+	ini_x_mi = pars.sz_x/2 - pars.ini_x/2
+	ini_x_ma = pars.sz_x/2 + pars.ini_x/2
+
+	for i in 1:pars.n_obst
+		x, y = 0.0, 0.0
+		while true
+			y = rand() * pars.sz_y
+			x = rand() * pars.sz_x
+			if ! (ini_y_mi < y < ini_y_ma && ini_x_mi < x < ini_x_ma)
+				break
+			end
+		end
+
+		new_obst = Obstacle((y,x), pars.obst_effect)
+		add_to_cache!(world.obstacle_cache, new_obst, (y,x))
+	end
 	
 	pop = Person[]
 	for i in 1:pars.n_ini
-		pos = pars.sz[1]/2 - pars.ini_y/2 + rand() * pars.ini_y, 
-			   pars.sz[2]/2 - pars.ini_x/2 + rand() * pars.ini_x 
+		pos = ini_y_mi + rand() * pars.ini_y, 
+			   ini_x_mi + rand() * pars.ini_x 
 			   
 		person = Person(pos)
 		person.coop = rand() * (pars.ini_coop[2] - pars.ini_coop[1]) + pars.ini_coop[1]
 		push!(pop, person)
 		add_to_cache!(world.pop_cache, person, person.pos)
 		adj_density_arrive!(person, Person[], world, pars)
+		set_landscape_arrive!(person, world, pars)
 	end
 
 	foreach(p -> spawn!(p, sim), pop)
@@ -262,7 +378,7 @@ function check_weather_density(world, pars)
 			set_weather_arrive!(test_person, world, pars)
 			@assert(abs(test_person.local_cond - person.local_cond)<0.0001,
 				 "$(test_person.local_cond) != $(person.local_cond)")
-			for p in iter_circle(world.pop_cache, test_person.pos, pars.rad_density)
+			for p in iter_circle(world.pop_cache, test_person.pos, pars.spread_density*pars.effect_radius)
 				test_person.density += density(test_person.pos, p.pos, pars)
 			end	
 			@assert abs(test_person.density - person.density) < 0.0001 "$(test_person.density) != $(person.density)"
