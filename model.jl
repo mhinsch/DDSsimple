@@ -11,9 +11,10 @@ mutable struct Person
 	storage :: Float64
 	landscape :: Float64
 	coop :: Float64
+	family :: BitVector
 end
 
-Person(pos) = Person(pos, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0)
+Person(pos) = Person(pos, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, [])
 
 
 struct Weather

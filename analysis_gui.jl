@@ -13,6 +13,7 @@ const dist = Float64[]
 const coop = Float64[]
 const cond = Float64[]
 const store = Float64[]
+const lsc = Float64[]
 
 @observe DataGUI world t pars begin
     @record "time" Float64 t
@@ -24,6 +25,7 @@ const store = Float64[]
     empty!(coop)
     empty!(cond)
     empty!(store)
+    empty!(lsc)
 
     for p in iter_cache(world.pop_cache)
         @stat("N", CountAcc) <| true
@@ -57,6 +59,7 @@ const store = Float64[]
         push!(prov, provision(p, pars))
         push!(cond, p.local_cond)
         push!(store, p.storage)
+        push!(lsc, p.landscape)
     end
 
     @record "distance_all" Vector{Float64} dist
@@ -66,6 +69,7 @@ const store = Float64[]
     @record "coop_all" Vector{Float64} coop
     @record "condition_all" Vector{Float64} cond
     @record "storage_all" Vector{Float64} store
+    @record "lsc_all" Vector{Float64} lsc
 
     @record "cor_dens_exch" Tuple{Float64, Float64} (isempty(dens) ?
         (0.0, 0.0) : Tuple{Float64, Float64}(coef(linregress(dens, exch))))

@@ -15,7 +15,7 @@ end
 # current "income"
 function surplus(person, pars)
 	density = person.density / pars.capacity
-	lc = person.local_cond
+	lc = person.local_cond - 1
 	mode = pars.weather_density_mode
 	lc_effect =
 		if mode == 1
@@ -29,7 +29,7 @@ function surplus(person, pars)
 			0.0
 		end
 
-	person.exchange + lc_effect + person.landscape - density
+	person.exchange + 1 + lc_effect + person.landscape - density
 end
 
 pot_donation(person, pars) =
@@ -111,9 +111,24 @@ function adj_density_arrive!(new_person, affected, world, pars)
 end
 
 
+relatedness(p1, p2) = count(p1.family.==p2.family)/length(p1.family)
+
+
+function mutate_family!(person, pars)
+	for i in 1:pars.n_family_mutate
+		m = rand(1:pars.n_family)
+		person.family[m] = !person.family[m]
+	end
+end
+
+
 function reproduce!(person, world, pars)
 	child = Person(person.pos)
 	child.coop = person.coop
+	if pars.n_family > 0
+		child.family = copy(person.family)
+		mutate_family!(child, pars)
+	end
 	add_to_cache!(world.pop_cache, child, child.pos)
 	child
 end
@@ -346,6 +361,10 @@ function setup(pars)
 			   ini_x_mi + rand() * pars.ini_x 
 			   
 		person = Person(pos)
+
+		if pars.n_family > 0
+			person.family = BitVector(rand(Bool, pars.n_family))
+		end
 		person.coop = rand() * (pars.ini_coop[2] - pars.ini_coop[1]) + pars.ini_coop[1]
 		push!(pop, person)
 		add_to_cache!(world.pop_cache, person, person.pos)
