@@ -86,6 +86,11 @@
 	"'mutation' rate"
 	r_mut :: Float64 = 0.0
 	d_mut :: Float64 = 0.05
+
+	"number of bits in family genes"
+	n_family :: Int = 0
+	"how many bits to flip during mutation"
+	n_family_mutate :: Int = 0
 	
 	"rate of appearance of weather effects"
 	r_weather :: Float64 = 20
