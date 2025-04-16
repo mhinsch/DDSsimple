@@ -279,7 +279,7 @@ end
 
 @inline exchange_weight(donee, donor, pars) =
 	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * pot_donation(donor, pars) *
-	donor.coop
+	donor.coop * (pars.rel_exchange ? relatedness(donee, donor) : 1.0)
 
 function exchange!(person, world, pars)
 	@assert provision(person, pars) < 0
