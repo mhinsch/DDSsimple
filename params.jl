@@ -91,6 +91,8 @@
 	n_family :: Int = 0
 	"how many bits to flip during mutation"
 	n_family_mutate :: Int = 0
+	"whether relatedness affects exchange"
+	rel_exchange :: Bool = false
 	
 	"rate of appearance of weather effects"
 	r_weather :: Float64 = 20
