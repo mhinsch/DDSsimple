@@ -103,7 +103,7 @@
 	spread_weather :: Float64 = 10.0
 	"min and max value of weather influence on capacity"
 	wth_range :: Vector{Float64} = [-1.0, 0.0]
-	"whether weather is mitigated by density"
+	"whether weather is mitigated by density: 1 - not at all, 2 - density, 3 - landscape"
 	weather_density_mode :: Int = 1
 
 	"random seed"
