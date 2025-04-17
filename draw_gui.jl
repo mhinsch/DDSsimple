@@ -69,14 +69,15 @@ function draw_world(canvas, model)
 		for a in pc[y, x]
 			p = a.pos ./ (zoomy, zoomx)
 
-			#col = rgb(a.coop*150+105, a.coop*150+105, 255)
+			colc = rgb((1.0-a.coop)*150+105, a.coop*150+105, 155)
 			prov = limit(-1.0, provision(a, model.pars), 1.0)
 			exch = sign(a.exchange)
 #			col = rgb(150, prov*125+130, 130-prov*125)
 			col = if exch > 0
 					rgb(255, 0, 255)
 				elseif exch == 0
-					rgb(0, 155, 0)
+					#rgb(0, 155, 0)
+					colc
 				else
 					rgb(255, 255, 255)
 				end
