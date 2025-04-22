@@ -92,5 +92,5 @@ end
 
 function ticker(out, data::DataGUI)
     um = data.outside.n / data.N.n
-    println(out, "$(data.time) - N: $(data.N.n), dens: $(data.density.mean), prov: $(data.prov.mean) ex: $(data.exchange.mean)")
+    println(out, "$(data.time) - N: $(data.N.n), dens: $(data.density.mean), prov: $(data.prov.mean), coop: $(data.coop.mean), ex: $(data.exchange.mean)")
 end
