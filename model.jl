@@ -5,6 +5,7 @@ using MiniEvents
 
 mutable struct Person
 	pos :: Pos
+	toa :: Float64
 	density :: Float64
 	local_cond :: Float64
 	exchange :: Float64
@@ -14,7 +15,7 @@ mutable struct Person
 	family :: BitVector
 end
 
-Person(pos) = Person(pos, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, [])
+Person(pos) = Person(pos, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, [])
 
 
 struct Weather
@@ -43,6 +44,7 @@ end
 		person.exchange != 0.0 ? @sim().n_x += 1 : @sim().n_no_x += 1
 			
 		child = reproduce!(person, @sim().world, @sim().pars)
+		child.toa = now(@sim())
 		affected = Person[]
 		adj_density_arrive!(child, affected, @sim().world, @sim().pars)
 		set_weather_arrive!(child, @sim().world, @sim().pars)
@@ -60,7 +62,7 @@ end
 		die!(person, @sim().world, @sim().pars)
 		
 		affected = Person[]
-		adj_density_leave!(person.pos, affected, @sim().world, @sim().pars)
+		adj_density_leave!(person, affected, @sim().world, @sim().pars)
 
 		@sim().N -= 1
 		@kill person
@@ -77,7 +79,7 @@ end
 
 		died = move!(person, @sim().world, @sim().pars)
 		if died
-			adj_density_leave!(person.pos, affected, @sim().world, @sim().pars)
+			adj_density_leave!(person, affected, @sim().world, @sim().pars)
 
 			@sim().N -= 1
 			@kill person
@@ -87,7 +89,7 @@ end
 
 			set_landscape_arrive!(person, @sim().world, @sim().pars)
 		
-			adj_density_move!(old_pos, person, affected, @sim().world, @sim().pars)
+			adj_density_move!(old_pos, person, now(@sim()), affected, @sim().world, @sim().pars)
 		end
 #		println("move: $(old_pos) -> $(person.pos), $(person.density), $(person.weather)")
 		@r affected

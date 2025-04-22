@@ -82,6 +82,12 @@ end
 
 @inline density(p1, p2, pars) = gaussian((p1.-p2)..., pars.spread_density)
 
+function density_effects(p1, p2, pars)
+	effect = density(p1.pos, p2.pos, pars)
+	scale = p1.toa > p2.toa ? pars.despoticness : 1.0 - pars.despoticness
+	effect * 2.0 * scale, effect * 2.0 * (1.0 - scale)
+end
+
 @inline weather_effect(weather, ppos, pars) =
 	weather.effect * gaussian((weather.pos.-ppos)..., pars.spread_weather)
 
@@ -89,9 +95,10 @@ end
 	obst.effect * gaussian((obst.pos.-ppos)..., pars.spread_density)
 
 
-function adj_density_leave!(pos, affected, world, pars)
-	for person in iter_circle(world.pop_cache, pos, pars.spread_density*pars.effect_radius)
-		person.density -= density(pos, person.pos, pars)
+function adj_density_leave!(leaver, affected, world, pars)
+	for person in iter_circle(world.pop_cache, leaver.pos, pars.spread_density*pars.effect_radius)
+		effect_l, effect_s = density_effects(leaver, person, pars)
+		person.density -= effect_s
 		push!(affected, person)
 	end	
 	nothing
@@ -100,13 +107,13 @@ end
 
 function adj_density_arrive!(new_person, affected, world, pars)
 	for person in iter_circle(world.pop_cache, new_person.pos, pars.spread_density*pars.effect_radius)
-		delta = density(new_person.pos, person.pos, pars)
-		@assert delta >= 0
-		person.density += delta
-		new_person.density += delta
+		delta_n, delta_o = density_effects(new_person, person, pars)
+		@assert delta_n >= 0 && delta_o >= 0
+		person.density += delta_o
+		new_person.density += delta_n
 		push!(affected, person)
 	end	
-	new_person.density -= density(new_person.pos, new_person.pos, pars)
+	new_person.density -= density_effects(new_person, new_person, pars)[1]
 	nothing
 end
 
@@ -173,10 +180,11 @@ function move!(person, world, pars)
 end
 
 
-function adj_density_move!(old_pos, migrant, affected, world, pars)
+function adj_density_move!(old_pos, migrant, time_now, affected, world, pars)
 	# adjust for migrant moving away
-	adj_density_leave!(old_pos, affected, world, pars)
+	adj_density_leave!(migrant, affected, world, pars)
 	migrant.density = 0.0
+	migrant.toa = time_now
 	# now adjust for migrant moving in
 	adj_density_arrive!(migrant, affected, world, pars)
 

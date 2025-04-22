@@ -51,6 +51,8 @@
 	spread_density :: Float64 = 5.0
 	"effect of obstacles"
 	obst_effect :: Float64 = -1.0
+	"priority of resource access for first arrivals"
+	despoticness :: Float64 = 0.5
 
 	"whether agents are stopped at the edge or disappear"
 	open_edge :: Bool = true
@@ -81,7 +83,7 @@
 	"rate at which resources get reset to default"
 	r_reset_prov :: Float64 = 1.0
 	"whether to cap donations at amount needed"
-	cap_donations :: Bool = false
+	cap_donations :: Bool = true
 
 	"'mutation' rate"
 	r_mut :: Float64 = 0.0
