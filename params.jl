@@ -51,6 +51,8 @@
 	spread_density :: Float64 = 5.0
 	"effect of obstacles"
 	obst_effect :: Float64 = -1.0
+	"priority of resource access for first arrivals"
+	despoticness :: Float64 = 0.5
 
 	"whether agents are stopped at the edge or disappear"
 	open_edge :: Bool = true
@@ -81,7 +83,7 @@
 	"rate at which resources get reset to default"
 	r_reset_prov :: Float64 = 1.0
 	"whether to cap donations at amount needed"
-	cap_donations :: Bool = false
+	cap_donations :: Bool = true
 
 	"'mutation' rate"
 	r_mut :: Float64 = 0.0
@@ -103,7 +105,7 @@
 	spread_weather :: Float64 = 10.0
 	"min and max value of weather influence on capacity"
 	wth_range :: Vector{Float64} = [-1.0, 0.0]
-	"whether weather is mitigated by density"
+	"whether weather is mitigated by density: 1 - not at all, 2 - density, 3 - landscape"
 	weather_density_mode :: Int = 1
 
 	"random seed"

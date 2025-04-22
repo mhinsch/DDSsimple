@@ -36,11 +36,12 @@ function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
 			if (now = trunc(Int, t)) > last
 				data = observe(DataGUI, model.world, t, model.pars)
 				ticker(stdout, data)
+				ticker(logfile, data)
 				# in case we skipped a step (shouldn't happen, but just in case...)
 				for i in last:now
 					set_data!(graphs1[1], [0.0, 0.0]) 
 					set_data!(graphs1[2], data.distance_all, data.provision_all)
-					set_data!(graphs1[3], data.distance_all, data.storage_all)
+					set_data!(graphs1[3], data.distance_all, data.density_all./model.pars.capacity)
 					set_data!(graphs1[4], pred(data.distance_all, data.cor_dist_store))
 					set_data!(graphs1[5], data.distance_all, data.exchange_all)
 					set_data!(graphs1[6], pred(data.distance_all, data.cor_dist_exch))
@@ -132,7 +133,7 @@ const gui = setup_Gui("SRM", 2000, 1002, (1, 1:3), (2, 1), (2, 2), (2,3))
 const graphs1 = [
 	Graph{Float64}(WHITE, ""), 
 	Graph{Float64}(rgb(255, 198, 0), "dist -> prov", method=:scatter),
-	Graph{Float64}(rgb(255, 0, 200), "dist -> store", method=:scatter),
+	Graph{Float64}(rgb(255, 0, 200), "dist -> dens", method=:scatter),
 	Graph{Float64}(rgb(255, 0, 200), ""),
 	Graph{Float64}(rgb(0, 240, 255), "dist -> exch", method=:scatter),
 	Graph{Float64}(rgb(0, 240, 255), "")]
