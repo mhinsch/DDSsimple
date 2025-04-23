@@ -83,9 +83,14 @@ end
 @inline density(p1, p2, pars) = gaussian((p1.-p2)..., pars.spread_density)
 
 function density_effects(p1, p2, pars)
-	effect = density(p1.pos, p2.pos, pars)
+	effect = density(p1.pos, p2.pos, pars) 
+	# no priority for effect on self
+	if p1 == p2
+		return effect, effect
+	end
+	# p1 arrived later than p2 => experiences despoticness
 	scale = p1.toa > p2.toa ? pars.despoticness : 1.0 - pars.despoticness
-	effect * 2.0 * scale, effect * 2.0 * (1.0 - scale)
+	2 * effect * scale, 2 * effect * (1.0 - scale)
 end
 
 @inline weather_effect(weather, ppos, pars) =
@@ -97,9 +102,14 @@ end
 
 function adj_density_leave!(leaver, affected, world, pars)
 	for person in iter_circle(world.pop_cache, leaver.pos, pars.spread_density*pars.effect_radius)
+		push!(affected, person)
+		# leavers' density gets reset anyway
+		if person == leaver
+			continue
+		end
 		effect_l, effect_s = density_effects(leaver, person, pars)
 		person.density -= effect_s
-		push!(affected, person)
+		@assert person.density >= 0.0 "$(person.density)"
 	end	
 	nothing
 end
@@ -107,13 +117,15 @@ end
 
 function adj_density_arrive!(new_person, affected, world, pars)
 	for person in iter_circle(world.pop_cache, new_person.pos, pars.spread_density*pars.effect_radius)
+		push!(affected, person)
 		delta_n, delta_o = density_effects(new_person, person, pars)
 		@assert delta_n >= 0 && delta_o >= 0
 		person.density += delta_o
 		new_person.density += delta_n
-		push!(affected, person)
 	end	
+	# avoid double counting
 	new_person.density -= density_effects(new_person, new_person, pars)[1]
+	@assert new_person.density >= 0.0 "$(new_person.density)"
 	nothing
 end
 
@@ -177,21 +189,6 @@ function move!(person, world, pars)
 	person.pos = new_pos
 
 	false
-end
-
-
-function adj_density_move!(old_pos, migrant, time_now, affected, world, pars)
-	# adjust for migrant moving away
-	adj_density_leave!(migrant, affected, world, pars)
-	migrant.density = 0.0
-	migrant.toa = time_now
-	# now adjust for migrant moving in
-	adj_density_arrive!(migrant, affected, world, pars)
-
-	# ranges might overlap, so we have to make sure to remove duplicates
-	sort!(affected, by=objectid)
-	unique!(affected)
-	nothing
 end
 
 
@@ -369,6 +366,8 @@ function setup(pars)
 			   ini_x_mi + rand() * pars.ini_x 
 			   
 		person = Person(pos)
+		# artificial toa to avoid ambiguities
+		person.toa = -i
 
 		if pars.n_family > 0
 			person.family = BitVector(rand(Bool, pars.n_family))
@@ -414,3 +413,37 @@ function check_weather_density(world, pars)
 end
 
 
+function check_iter_circle(world, pars)
+	pop = Person[]
+	for x in 1:size(world.pop_cache.data)[2], y in 1:size(world.pop_cache.data)[1]
+		append!(pop, world.pop_cache.data[y,x])
+	end
+
+	n = 0
+
+	for p1 in pop, p2 in pop
+
+		found1 = false
+		for person in iter_circle(world.pop_cache, p1.pos, pars.spread_density*pars.effect_radius)
+			if person == p2
+				found1 = true
+				break
+			end
+		end
+
+		found2 = false
+		for person in iter_circle(world.pop_cache, p2.pos, pars.spread_density*pars.effect_radius)
+			if person == p1
+				found2 = true
+				break
+			end
+		end
+
+		if found1 != found2
+			n += 1
+		end
+	end
+
+	@assert n==0 "$n mismatches"
+end
+		
