@@ -11,9 +11,11 @@ function run_model(model, logfile, step = 1.0)
 	t = 1.0
 
 	while t < model.pars.t_max
+		check_iter_circle(model.world, model.pars)
 		step_until!(model, t) # run internal scheduler up to the next time step
 	    data = observe(Data, model.world, t, model.pars)
 		ticker(stdout, data)
+		println(length(model.alist_1.events))
 		
 		t += step
 	end

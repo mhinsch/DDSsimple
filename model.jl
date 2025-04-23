@@ -70,26 +70,28 @@ end
 	end
 		
 	@rate(move_rate(person, @sim().pars)) ~ true => begin
-		old_pos = person.pos
-		old_local_cond = person.local_cond
-
 		affected = Person[]
 
-		person.landscape = 0.0
+		adj_density_leave!(person, affected, @sim().world, @sim().pars)
 
 		died = move!(person, @sim().world, @sim().pars)
-		if died
-			adj_density_leave!(person, affected, @sim().world, @sim().pars)
 
+		if died
 			@sim().N -= 1
 			@kill person
 		else
 			person.local_cond = 1.0
 			set_weather_arrive!(person, @sim().world, @sim().pars)
 
+			person.landscape = 0.0
 			set_landscape_arrive!(person, @sim().world, @sim().pars)
 		
-			adj_density_move!(old_pos, person, now(@sim()), affected, @sim().world, @sim().pars)
+			person.density = 0.0
+			person.toa = now(@sim())
+			adj_density_arrive!(person, affected, @sim().world, @sim().pars)
+			
+			sort!(affected, by=objectid)
+			unique!(affected)
 		end
 #		println("move: $(old_pos) -> $(person.pos), $(person.density), $(person.weather)")
 		@r affected
