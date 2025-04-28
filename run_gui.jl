@@ -23,8 +23,14 @@ function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
 	quit = false
 	one_frame = false
 	fullscreen = false
+    before_end = true
 	while ! quit
 		# don't do anything if we are in pause mode
+        # switch to pause mode when t_max is reached
+        if before_end && t > model.pars.t_max
+            before_end = false
+            pause = true
+        end
 		if pause && one_frame == false
 			sleep(0.03)
 		else
