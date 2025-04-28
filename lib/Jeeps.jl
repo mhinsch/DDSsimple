@@ -118,6 +118,10 @@ function to_cmdl_arg(arg :: Tuple{ITER1, ITER2}, prefix, sep = " ") where {ITER1
 	ret
 end
 
+function to_cmdl_arg(arg :: Tuple{Symbol, ITER1, ITER2}, prefix, sep = " ") where {ITER1, ITER2}
+    to_cmdl_arg((arg[2], arg[3]), prefix, sep)
+end
+
 function apply_value!(params, arg :: Tuple{ITER1, ITER2}) where {ITER1, ITER2}
 	for (name, value) in zip(arg...)
 		apply_value!(params, (name, value))
