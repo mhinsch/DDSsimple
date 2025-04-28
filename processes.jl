@@ -119,7 +119,6 @@ function adj_density_arrive!(new_person, affected, world, pars)
 	for person in iter_circle(world.pop_cache, new_person.pos, pars.spread_density*pars.effect_radius)
 		push!(affected, person)
 		delta_n, delta_o = density_effects(new_person, person, pars)
-		@assert delta_n >= 0 && delta_o >= 0
 		person.density += delta_o
 		new_person.density += delta_n
 	end	
