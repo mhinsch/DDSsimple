@@ -286,42 +286,42 @@ end
 	gaussian((donee.pos.-donor.pos)..., pars.spread_exchange) * pot_donation(donor, pars) *
 	donor.coop * (pars.rel_exchange ? relatedness(donee, donor) : 1.0)
 
-function exchange!(person, world, pars)
-	@assert provision(person, pars) < 0
+function exchange!(donee, world, pars)
+	@assert provision(donee, pars) < 0
 	pot_donors = Person[]
 	weights = Float64[]
 
 	sum_w = 0.0
-	for p in iter_circle(world.pop_cache, person.pos, pars.spread_exchange*pars.effect_radius)
-		if pot_donation(p, pars) > 0.0 && p.coop > 0.0
-			push!(pot_donors, p)
-			push!(weights, exchange_weight(person, p, pars))
+	for donor in iter_circle(world.pop_cache, donee.pos, pars.spread_exchange*pars.effect_radius)
+		if pot_donation(donor, pars) > 0.0 && donor.coop > 0.0
+			push!(pot_donors, donor)
+			push!(weights, exchange_weight(donee, donor, pars))
 			@assert weights[end] >= 0.0
 			sum_w += weights[end]
 		end
 	end
 
 	if isempty(pot_donors)
-		return person
+		return donee
 	end
 
 	s = rand() * sum_w
-	for (p,w) in zip(pot_donors, weights)
+	for (donor,w) in zip(pot_donors, weights)
 		if s < w
-			donation = pot_donation(p, pars) * pars.prop_exchange * p.coop
+			donation = pot_donation(donor, pars) * pars.prop_exchange * donor.coop
 			if pars.cap_donations
-				donation = min(donation, -provision(person, pars)/pars.eff_exchange)
+				donation = min(donation, -provision(donee, pars)/pars.eff_exchange)
 			end
 			@assert donation > 0.0
-			p.exchange -= donation
-			person.exchange += donation * pars.eff_exchange
+			donor.exchange -= donation
+			donee.exchange += donation * pars.eff_exchange
 			
-			return p
+			return donor
 		end
 		s -= w
 	end
 	error("donor selection went wrong")		
-	person
+	donee
 end
 
 
