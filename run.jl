@@ -16,6 +16,7 @@ function run_model(model, logfile, step = 1.0)
 	    data = observe(Data, model.world, t, model.pars)
 		ticker(stdout, data)
 		println(length(model.alist_1.events))
+		log_results(logfile, data)
 		
 		t += step
 	end
@@ -24,7 +25,7 @@ end
 
 function prepare_outfiles(fname)
 	logfile = open(fname, "w")
-	#print_header(logfile, Data)
+	print_header(logfile, Data)
 	logfile
 end
 
