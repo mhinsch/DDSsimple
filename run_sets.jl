@@ -20,12 +20,15 @@ function run_once(pars)
 end
 
 
-function run_nth(parspace, n)
+function run_nth(parspace, n; save_pars=false)
     p = nth_point(parspace, n)
     if p == nothing
         error("no such point")
     end
     pars = apply_values!(Pars(), p)
+    if save_pars
+        save_parameters_to_file("pars.$n.yaml", pars)
+    end
     run_once(pars), p
 end
 

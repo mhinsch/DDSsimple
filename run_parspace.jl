@@ -4,11 +4,11 @@ using CSV
 include("run_sets.jl")
 
 
-function run_batch(ps, range, outf)
+function run_batch(ps, range, outf; save_pars=false)
     df = create_dataframe!(Data, DataFrame())
     pardf = create_df_cols!(ps, DataFrame())
     for n in range
-        data, pc = run_nth(ps, n)
+        data, pc = run_nth(ps, n; save_pars)
         add_to_dataframe!(df, data)
         add_to_df!(pardf, pc)
     end
@@ -27,5 +27,5 @@ const batch_n = parse(Int, ARGS[3])
 
 include(psfile)
 
-run_batch(parspace(), ((batch_n-1)*batch_size+1):(batch_n*batch_size), "results_$batch_n.csv")
+run_batch(parspace(), ((batch_n-1)*batch_size+1):(batch_n*batch_size), "results_$batch_n.csv", save_pars=true)
 
