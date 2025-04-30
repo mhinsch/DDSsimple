@@ -330,6 +330,26 @@ function mutate!(person, pars)
 end
 
 
+function shuffle_coop!(world, pars)
+	pars.shuffle_coop || return
+	
+	coop = Float64[]
+    for p in iter_cache(world.pop_cache)
+    	push!(coop, p.coop)
+    end
+
+    shuffle!(coop)
+
+    i = 1
+    for p in iter_cache(world.pop_cache)
+    	p.coop = coop[i]
+    	i += 1
+    end
+
+    nothing
+end
+
+
 function setup(pars)
 	Random.seed!(pars.seed)
 	cache_zoom = 5.0

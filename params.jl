@@ -108,6 +108,8 @@
 	"whether weather is mitigated by density: 1 - not at all, 2 - density, 3 - landscape"
 	weather_density_mode :: Int = 1
 
+	shuffle_coop :: Bool = false
+
 	"random seed"
 	seed :: Int = 41
 	"simulation time"

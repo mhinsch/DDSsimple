@@ -144,12 +144,13 @@ end
 @events world::World begin
 	@debug
 
-	@rate(@sim().pars.r_weather) ~ true =>
-	begin
+	@rate(@sim().pars.r_weather) ~ true => begin
 		weather, affected = add_weather!(world, @sim().pars)
 		@spawn weather
 		@r world affected
 	end
+
+	@repeat(1.0, 1.0) => shuffle_coop!(world, @sim().pars)
 end
 
 
