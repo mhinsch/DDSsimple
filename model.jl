@@ -79,6 +79,7 @@ end
 		if died
 			@sim().N -= 1
 			@kill person
+			remove_uo!(affected, person)
 		else
 			person.local_cond = 1.0
 			set_weather_arrive!(person, @sim().world, @sim().pars)
