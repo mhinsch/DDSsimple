@@ -329,6 +329,7 @@ function mutate!(person, pars)
 	nothing
 end
 
+const rng = Xoshiro(0)
 
 function shuffle_coop!(world, pars)
 	pars.shuffle_coop || return
@@ -338,7 +339,7 @@ function shuffle_coop!(world, pars)
     	push!(coop, p.coop)
     end
 
-    shuffle!(coop)
+    shuffle!(rng, coop)
 
     i = 1
     for p in iter_cache(world.pop_cache)
