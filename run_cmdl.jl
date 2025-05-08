@@ -1,4 +1,5 @@
 include("run.jl")
+include("analysis.jl")
 
 const model, logf = prepare_model(ARGS) 
 

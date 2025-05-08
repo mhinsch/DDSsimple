@@ -4,7 +4,6 @@ using MiniEvents
 include("util.jl")
 include("processes.jl")
 include("main_util.jl")
-include("analysis.jl")
 
 
 function run_model(model, logfile, step = 1.0)
