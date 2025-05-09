@@ -40,7 +40,7 @@ function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
 		
 			# we want the analysis to happen at every integral time step
 			if (now = trunc(Int, t)) > last
-				data = observe(DataGUI, model.world, t, model.pars)
+				data = observe(Data, model.world, t, model.pars)
 				ticker(stdout, data)
 				ticker(logfile, data)
 				# in case we skipped a step (shouldn't happen, but just in case...)

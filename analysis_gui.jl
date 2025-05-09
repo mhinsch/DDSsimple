@@ -15,7 +15,7 @@ const cond = Float64[]
 const store = Float64[]
 const lsc = Float64[]
 
-@observe DataGUI world t pars begin
+@observe Data world t pars begin
     @record "time" Float64 t
 
     empty!(dens)
@@ -90,7 +90,7 @@ const lsc = Float64[]
 end
 
 
-function ticker(out, data::DataGUI)
+function ticker(out, data::Data)
     um = data.outside.n / data.N.n
     println(out, "$(data.time) - N: $(data.N.n), dens: $(data.density.mean), prov: $(data.prov.mean), coop: $(data.coop.mean), ex: $(data.exchange.mean)")
 end
