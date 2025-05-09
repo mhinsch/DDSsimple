@@ -13,6 +13,9 @@ function local_relatedness(person, radius, world)
     n = 0
 
     for p in iter_circle(world.pop_cache, person.pos, radius)
+        if p == person
+            continue
+        end
         rel = relatedness(person, p)
         m = max(m, rel)
         r += rel
