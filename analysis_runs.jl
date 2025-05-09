@@ -7,6 +7,20 @@ const MVA = MeanVarAcc{Float64}
 const MMA = MaxMinAcc{Float64}
 
 
+function local_relatedness(person, radius, world)
+    r = 0.0
+    n = 0
+
+    for p in iter_circle(world.pop_cache, person.pos, radius)
+        r += relatedness(person, p)
+        n += 1
+    end
+
+    r / n
+end
+
+
+
 @observe Data world t pars begin
     @record "time" Float64 t
 
@@ -17,6 +31,9 @@ const MMA = MaxMinAcc{Float64}
     coop = Float64[]
     cond = Float64[]
 
+    pop_in = Person[]
+    pop_edge = Person[]
+    
     for p in iter_cache(world.pop_cache)
         @stat("N", CountAcc) <| true
 
@@ -28,9 +45,11 @@ const MMA = MaxMinAcc{Float64}
             @stat("outside", CountAcc) <| true
             @stat("coop_out", MVA) <| p.coop
             if d > 400.0
+                push!(pop_edge, p)
                 @stat("coop_edge", MVA) <| p.coop
             end
         else
+            push!(pop_in, p)
             @stat("coop_in", MVA) <| p.coop
         end
         
@@ -52,6 +71,22 @@ const MMA = MaxMinAcc{Float64}
         push!(cond, p.local_cond)
     end
 
+
+    if !isempty(pop_in)
+        for i in 1:20
+            p = rand(pop_in)
+            @stat("locrel_in", MVA) <| local_relatedness(p, pars.spread_exchange, world)
+        end
+    end
+
+    if !isempty(pop_edge)
+        for i in 1:20
+            p = rand(pop_edge)
+            @stat("locrel_edge", MVA) <| local_relatedness(p, pars.spread_exchange, world)
+        end
+    end
+
+    
     range = pars.spread_exchange * pars.effect_radius
     coop_d = Float64[]
     n_d = Int[]
