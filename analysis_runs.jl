@@ -9,14 +9,17 @@ const MMA = MaxMinAcc{Float64}
 
 function local_relatedness(person, radius, world)
     r = 0.0
+    m = 0.0
     n = 0
 
     for p in iter_circle(world.pop_cache, person.pos, radius)
-        r += relatedness(person, p)
+        rel = relatedness(person, p)
+        m = max(m, rel)
+        r += rel
         n += 1
     end
 
-    r / n
+    r/n, m
 end
 
 
@@ -75,14 +78,18 @@ end
     if !isempty(pop_in)
         for i in 1:20
             p = rand(pop_in)
-            @stat("locrel_in", MVA) <| local_relatedness(p, pars.spread_exchange, world)
+            mean_r, max_r = local_relatedness(p, pars.spread_exchange, world)
+            @stat("meanlocrel_in", MVA) <| mean_r
+            @stat("maxlocrel_in", MVA) <| max_r
         end
     end
 
     if !isempty(pop_edge)
         for i in 1:20
             p = rand(pop_edge)
-            @stat("locrel_edge", MVA) <| local_relatedness(p, pars.spread_exchange, world)
+            mean_r, max_r = local_relatedness(p, pars.spread_exchange, world)
+            @stat("meanlocrel_edge", MVA) <| mean_r
+            @stat("maxlocrel_edge", MVA) <| max_r
         end
     end
 
