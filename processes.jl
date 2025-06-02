@@ -154,6 +154,7 @@ end
 
 function die!(person, world, pars)
 	remove_from_cache!(world.pop_cache, person, person.pos)
+	person.toa = NaN
 	nothing
 end
 
@@ -352,7 +353,6 @@ end
 
 
 function setup(pars)
-	Random.seed!(pars.seed)
 	cache_zoom = 5.0
 	world = World(
 		Cache2D{Person}(floor.(Int, (pars.sz_y, pars.sz_x)./cache_zoom) .+ 1, cache_zoom),
