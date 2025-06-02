@@ -63,13 +63,13 @@ function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
 					set_data!(graphs2[3], data.density_all, data.exchange_all)
 					set_data!(graphs2[4], data.density_all, data.storage_all)
 
-					add_value!(graphs3[1], data.coop.mean)
+					#add_value!(graphs3[1], data.coop.mean)
 					#set_data!(graphs3[1], data.distance_all, data.condition_all)
 					#set_data!(graphs3[2], data.distance_all, data.coop_all)
 
-					#set_data!(graphs3[1], [0.0, 0.0]) 
-					#set_data!(graphs3[2], data.condition_all, data.provision_all)
-					#set_data!(graphs3[3], data.condition_all, data.exchange_all)
+					set_data!(graphs3[1], [0.0, 0.0]) 
+					set_data!(graphs3[2], data.condition_all, data.provision_all)
+					set_data!(graphs3[3], data.condition_all, data.exchange_all)
 					#=set_data!(graphs3[1], map(enumerate(data.dist.bins)) do (i,d)
 						d/(2*i+4.5)
 						end)=#
@@ -155,11 +155,12 @@ const graphs2 = [
 	Graph{Float64}(rgb(255, 0, 200), "dens -> store", method=:scatter)]
 
 const graphs3 = [
-#	Graph{Float64}(WHITE, ""), 
+	Graph{Float64}(WHITE, ""), 
 	#Graph{Float64}(rgb(255, 0, 200), "dist->condition", method=:scatter),
 	#Graph{Float64}(rgb(255, 128, 0), "dist->coop", method=:scatter)]
-	Graph{Float64}(rgb(255, 128, 0), "mean coop")]
-#	Graph{Float64}(rgb(0, 240, 255), "cond -> exch", method=:scatter)]
+	#Graph{Float64}(rgb(255, 128, 0), "mean coop")]
+	Graph{Float64}(rgb(255, 128, 0), "cond - prov", method=:scatter),
+	Graph{Float64}(rgb(0, 240, 255), "cond -> exch", method=:scatter)]
 #const graphs3 = [Graph{Float64}(WHITE, "density", method = :scatter)]
 
 run(model, gui, graphs1, graphs2, graphs3, logf)

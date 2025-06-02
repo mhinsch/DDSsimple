@@ -18,6 +18,9 @@ end
 Person(pos) = Person(pos, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, [])
 
 
+is_dead(person) = isnan(person.toa)
+
+
 struct Weather
 	pos :: Pos
 	effect :: Float64

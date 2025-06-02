@@ -62,7 +62,7 @@ function draw_world(canvas, model)
 
 	pc = model.world.pop_cache.data
 
-	r1_p = 2
+	r1_p = 1
 	r2_p = floor(Int, model.pars.spread_exchange/zoomx)
 
 	for y in 1:size(pc)[1], x in 1:size(pc)[2]
