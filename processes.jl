@@ -154,7 +154,6 @@ end
 
 function die!(person, world, pars)
 	remove_from_cache!(world.pop_cache, person, person.pos)
-	person.toa = NaN
 	nothing
 end
 

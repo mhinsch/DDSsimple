@@ -69,6 +69,7 @@ end
 
 		@sim().N -= 1
 		@kill person
+		person.toa = NaN
 		@r affected
 	end
 		
@@ -82,6 +83,7 @@ end
 		if died
 			@sim().N -= 1
 			@kill person
+			person.toa = NaN
 			remove_uo!(affected, person)
 		else
 			person.local_cond = 1.0
