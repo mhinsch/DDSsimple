@@ -68,7 +68,7 @@ function draw_world(canvas, model)
 	for y in 1:size(pc)[1], x in 1:size(pc)[2]
 		for a in pc[y, x]
 			p = a.pos ./ (zoomy, zoomx)
-			dens = limit(0.0, a.density / model.pars.capacity, 1.0)
+			dens = limit(0.0, a.density / ccapacity(model.pars), 1.0)
 
 			colc = rgb((1.0-dens)*150+105, dens*150+105, 155)
 			prov = limit(-1.0, provision(a, model.pars), 1.0)

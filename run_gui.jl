@@ -47,7 +47,7 @@ function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
 				for i in last:now
 					set_data!(graphs1[1], [0.0, 0.0]) 
 					set_data!(graphs1[2], data.distance_all, data.provision_all)
-					set_data!(graphs1[3], data.distance_all, data.density_all./model.pars.capacity)
+					set_data!(graphs1[3], data.distance_all, data.density_all./ccapacity(model.pars))
 					set_data!(graphs1[4], pred(data.distance_all, data.cor_dist_store))
 					set_data!(graphs1[5], data.distance_all, data.exchange_all)
 					set_data!(graphs1[6], pred(data.distance_all, data.cor_dist_exch))

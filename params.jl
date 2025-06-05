@@ -45,9 +45,9 @@
 	"nonlinear effects of provision on death (1=neutral)"
 	shape_prov_death :: Float64 = 2.0
 	
-	"carrying capacity"
-	capacity :: Float64 = 5.0
-	"sd of influence of density"
+	"specific carrying capacity ; K = r^2 * f"
+	spec_capacity :: Float64 = 1.0/5.0
+	"radius of influence of density"
 	spread_density :: Float64 = 5.0
 	"effect of obstacles"
 	obst_effect :: Float64 = -1.0

@@ -8,13 +8,16 @@ include("params.jl")
 include("model.jl")	
 
 
+# scale capacity by size of effect area
+ccapacity(pars) = pars.spread_density^2 * pars.spec_capacity
+
 function provision(person, pars)
 	sp = surplus(person, pars)
 	sp > 0 ? sp - person.storage : sp + person.storage
 end	
 # current "income"
 function surplus(person, pars)
-	density = person.density / pars.capacity
+	density = person.density / ccapacity(pars)
 	lc = person.local_cond - 1
 	mode = pars.weather_density_mode
 	lc_effect =
@@ -54,7 +57,7 @@ pot_donation(person, pars) =
 	pars.eff_prov_death * sigmoid(limit(0.0, -provision(person, pars), 1.0), pars.shape_prov_death)  
 
 @inline move_rate(person, pars) =
-	(1-pars.dd_move + pars.dd_move*(pars.dd_r_move_0 + person.density/pars.capacity)) * pars.r_move
+	(1-pars.dd_move + pars.dd_move*(pars.dd_r_move_0 + person.density/ccapacity(pars))) * pars.r_move
 
 @inline exchange_rate(person, pars) =
 	if pars.exchange_mode == 1
