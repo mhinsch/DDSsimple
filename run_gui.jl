@@ -1,6 +1,10 @@
 
 using SimpleDirectMediaLayer.LibSDL2
 
+import Colors
+using Colors: distinguishable_colors, RGB
+
+
 include("run.jl")
 include("analysis_gui.jl")
 
@@ -58,18 +62,22 @@ function run(model, gui, graphs1, graphs2, graphs3, logfile, max_step = 0.1)
 
 #					add_value!(graphs2[1], data.cor_cond_prov)
 #					add_value!(graphs2[2], data.cor_dens_prov)
-					set_data!(graphs2[1], [0.0, 0.0]) 
-					set_data!(graphs2[2], data.density_all, data.provision_all)
-					set_data!(graphs2[3], data.density_all, data.exchange_all)
-					set_data!(graphs2[4], data.density_all, data.storage_all)
+					set_data!(graphs2[1], data.sample_relatedness, data.sample_coop_diff)
+					set_data!(graphs2[2], pred(data.sample_relatedness, data.cor_rel_coop))
+					#set_data!(graphs2[1], [0.0, 0.0]) 
+					#set_data!(graphs2[2], data.density_all, data.provision_all)
+					#set_data!(graphs2[3], data.density_all, data.exchange_all)
+					#set_data!(graphs2[4], data.density_all, data.storage_all)
 
 					#add_value!(graphs3[1], data.coop.mean)
 					#set_data!(graphs3[1], data.distance_all, data.condition_all)
 					#set_data!(graphs3[2], data.distance_all, data.coop_all)
 
-					set_data!(graphs3[1], [0.0, 0.0]) 
-					set_data!(graphs3[2], data.condition_all, data.provision_all)
-					set_data!(graphs3[3], data.condition_all, data.exchange_all)
+					add_value!(graphs3[1], data.meanlocrel_in.mean)
+					add_value!(graphs3[2], data.maxlocrel_in.mean)
+					add_value!(graphs3[3], data.meanlocrel_edge.mean)
+					add_value!(graphs3[4], data.maxlocrel_edge.mean)
+					add_value!(graphs3[5], data.pop_relatedness.mean)
 					#=set_data!(graphs3[1], map(enumerate(data.dist.bins)) do (i,d)
 						d/(2*i+4.5)
 						end)=#
@@ -137,6 +145,10 @@ const model, logf = prepare_model(ARGS)
 
 # two 640x640 panels next to each other
 const gui = setup_Gui("SRM", 2000, 1002, (1, 1:3), (2, 1), (2, 2), (2,3))
+
+const rawcolors = distinguishable_colors(8, [RGB(1,1,1), RGB(0,0,0)], dropseed=true)
+const colors = map(c->(Colors.red(c), Colors.green(c), Colors.blue(c)).*255, rawcolors)
+
 const graphs1 = [
 	Graph{Float64}(WHITE, ""), 
 	Graph{Float64}(rgb(255, 198, 0), "dist -> prov", method=:scatter),
@@ -149,18 +161,22 @@ const graphs1 = [
 	Graph{Int}(rgb(0, 240, 255), "donors"),
 	Graph{Int}(WHITE, "donees")] =#
 const graphs2 = [
-	Graph{Float64}(WHITE, ""), 
-	Graph{Float64}(rgb(255, 198, 0), "dens -> prov", method=:scatter),
+	Graph{Float64}(rgb(colors[1]...), "", method=:scatter), 
+	Graph{Float64}(rgb(colors[2]...), "rel -> coop"),
 	Graph{Float64}(rgb(0, 240, 255), "dens -> exch", method=:scatter),
 	Graph{Float64}(rgb(255, 0, 200), "dens -> store", method=:scatter)]
 
 const graphs3 = [
-	Graph{Float64}(WHITE, ""), 
+	Graph{Float64}(rgb(colors[1]...), "mean rel in"), 
+	Graph{Float64}(rgb(colors[1]...), "max rel in"), 
+	Graph{Float64}(rgb(colors[2]...), "mean rel edge"), 
+	Graph{Float64}(rgb(colors[2]...), "max rel edge"), 
+	Graph{Float64}(rgb(colors[3]...), "pop relatedness")] 
 	#Graph{Float64}(rgb(255, 0, 200), "dist->condition", method=:scatter),
 	#Graph{Float64}(rgb(255, 128, 0), "dist->coop", method=:scatter)]
 	#Graph{Float64}(rgb(255, 128, 0), "mean coop")]
-	Graph{Float64}(rgb(255, 128, 0), "cond - prov", method=:scatter),
-	Graph{Float64}(rgb(0, 240, 255), "cond -> exch", method=:scatter)]
+	#Graph{Float64}(rgb(255, 128, 0), "cond - prov", method=:scatter),
+	#Graph{Float64}(rgb(0, 240, 255), "cond -> exch", method=:scatter)]
 #const graphs3 = [Graph{Float64}(WHITE, "density", method = :scatter)]
 
 run(model, gui, graphs1, graphs2, graphs3, logf)

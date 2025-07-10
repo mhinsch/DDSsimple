@@ -1,10 +1,4 @@
-using MiniObserve
-using LinearRegression
-
-# mean and variance
-const MVA = MeanVarAcc{Float64}
-# maximum, minimum
-const MMA = MaxMinAcc{Float64}
+include("analysis_common.jl")
 
 const dens = Float64[]
 const exch = Float64[]
@@ -14,6 +8,13 @@ const coop = Float64[]
 const cond = Float64[]
 const store = Float64[]
 const lsc = Float64[]
+
+const sample_relatedness = Float64[]
+const sample_coop_diff = Float64[]
+
+const pop = Person[]
+const pop_in = Person[]
+const pop_edge = Person[]
 
 @observe Data world t pars begin
     @record "time" Float64 t
@@ -27,8 +28,17 @@ const lsc = Float64[]
     empty!(store)
     empty!(lsc)
 
+    empty!(sample_relatedness)
+    empty!(sample_coop_diff)
+
+    empty!(pop)
+    empty!(pop_in)
+    empty!(pop_edge)
+    
     for p in iter_cache(world.pop_cache)
         @stat("N", CountAcc) <| true
+
+        push!(pop, p)
 
         d = euc_dist(p.pos, (pars.sz_y, pars.sz_x)./2)  
 
@@ -37,7 +47,12 @@ const lsc = Float64[]
         if d > 200.0
             @stat("outside", CountAcc) <| true
             @stat("coop_out", MVA) <| p.coop
+            if d > 400.0
+                push!(pop_edge, p)
+                @stat("coop_edge", MVA) <| p.coop
+            end
         else
+            push!(pop_in, p)
             @stat("coop_in", MVA) <| p.coop
         end
         
@@ -62,6 +77,46 @@ const lsc = Float64[]
         push!(lsc, p.landscape)
     end
 
+
+    if !isempty(pop_in)
+        for i in 1:20
+            p = rand(pop_in)
+            mean_r, max_r = local_relatedness(p, pars.spread_exchange, world)
+            @stat("meanlocrel_in", MVA) <| mean_r
+            @stat("maxlocrel_in", MVA) <| max_r
+        end
+    end
+
+    if !isempty(pop_edge)
+        for i in 1:20
+            p = rand(pop_edge)
+            mean_r, max_r = local_relatedness(p, pars.spread_exchange, world)
+            @stat("meanlocrel_edge", MVA) <| mean_r
+            @stat("maxlocrel_edge", MVA) <| max_r
+        end
+    end
+
+    if !isempty(pop)
+        for i in 1:500
+            p1 = rand(pop)
+            p2 = rand(pop)
+            if p1 == p2
+                continue
+            end
+            rel = relatedness(p1, p2)
+            diff_coop = abs(p1.coop - p2.coop)
+            @stat("pop_relatedness", MVA) <| rel
+
+            push!(sample_relatedness, rel)
+            push!(sample_coop_diff, diff_coop)
+        end
+    end
+
+    @record "sample_relatedness" Vector{Float64} sample_relatedness
+    @record "sample_coop_diff" Vector{Float64} sample_coop_diff
+    @record "cor_rel_coop" Tuple{Float64, Float64} (isempty(sample_relatedness) ?
+        (0.0, 0.0) : Tuple{Float64, Float64}(coef(linregress(sample_relatedness, sample_coop_diff))))
+    
     @record "distance_all" Vector{Float64} dist
     @record "density_all" Vector{Float64} dens
     @record "exchange_all" Vector{Float64} exch

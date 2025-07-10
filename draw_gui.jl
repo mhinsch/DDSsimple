@@ -84,8 +84,10 @@ function draw_world(canvas, model)
 				end
 				
 			col2 = rgb(50, 50, 50)
+
+			col3 = model.pars.n_family > 0 ? UInt32(a.family.chunks[1] & ~UInt32(0)) : col
 			
-			circle_fill(canvas, floor(Int, p[2]), floor(Int, p[1]), r1_p, col, true)
+			circle_fill(canvas, floor(Int, p[2]), floor(Int, p[1]), r1_p, col3, true)
 			#circle(canvas, floor(Int, p[1]), floor(Int, p[2]), r2_p, col2, true)
 		end
 	end
