@@ -392,7 +392,11 @@ function setup(pars)
 		person.toa = -i
 
 		if pars.n_family > 0
-			person.family = BitVector(rand(Bool, pars.n_family))
+			if pars.ini_rand_family
+				person.family = BitVector(rand(Bool, pars.n_family))
+			else
+				person.family = BitVector(zeros(Bool, pars.n_family))
+			end
 		end
 		person.coop = rand() * (pars.ini_coop[2] - pars.ini_coop[1]) + pars.ini_coop[1]
 		push!(pop, person)

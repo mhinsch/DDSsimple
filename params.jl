@@ -93,6 +93,7 @@
 	n_family :: Int = 0
 	"how many bits to flip during mutation"
 	n_family_mutate :: Int = 0
+	ini_rand_family :: Bool = true
 	"whether relatedness affects exchange"
 	rel_exchange :: Bool = false
 	
