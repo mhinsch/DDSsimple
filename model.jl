@@ -124,7 +124,7 @@ end
 	
 	@rate(improvement_rate(person, @sim().pars)) ~ person.landscape < 0.0 => begin
 		affected = improve_landscape!(person, @sim().world, @sim().pars)
-		@r person affected
+		@r affected
 	end
 	
 	@rate(@sim().pars.r_reset_prov) ~ person.exchange != 0.0 => begin
