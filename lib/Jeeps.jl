@@ -13,16 +13,17 @@ export to_cmdl_args, apply_values!, add_to_df!, create_df_cols!, create_df!
 
 abstract type ParAxis end
 
-
+"An axis of the parameter space that spans values of a single parameter."
 struct SingleParAxis{V_ITER} <: ParAxis
 	name :: Symbol
 	values :: V_ITER
 end
 
-
+"Generates an iterator across all values on the axis returning a tuple (name, value)."
 points_on_axis(pc :: SingleParAxis) = zip(repeated(pc.name), pc.values)
 
 
+"An axis of the parameter space that can simultaneously span values of multiple parameters. Optionally labels for each combination of values can be provided."
 struct MultiParAxis{N_ITER, V_ITER} <: ParAxis
 	names :: N_ITER
 	values :: V_ITER
@@ -30,12 +31,17 @@ struct MultiParAxis{N_ITER, V_ITER} <: ParAxis
 end
 
 
+"Generates an iterator across all values on the axis. If keys were provided a tuple (key, (names...), (values...)) is returned otherwise just ((names...), (values...))."
 points_on_axis(pc :: MultiParAxis) = isempty(pc.keys) ?
 	zip(repeated(pc.names), pc.values) :
 	zip(pc.keys, repeated(pc.names), pc.values)
 
 
+"Set the default value of parameter `name` in ParSpace `j` to `value`."
 default!(j, name, value) = par!(j, name, [value])
+
+"Add an axis to the parameter space."
+function par! end
 
 
 function par!(j, name::Symbol, values)
