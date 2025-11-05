@@ -57,7 +57,8 @@ pot_donation(person, pars) =
 	pars.eff_prov_death * sigmoid(limit(0.0, -provision(person, pars), 1.0), pars.shape_prov_death)  
 
 @inline move_rate(person, pars) =
-	(1-pars.dd_move + pars.dd_move*(pars.dd_r_move_0 + person.density/ccapacity(pars))) * pars.r_move
+	(pars.r_move_0 + pars.r_move_d * person.density/ccapacity(pars)) * pars.r_move
+#	(1-pars.dd_move + pars.dd_move*(pars.dd_r_move_0 + person.density/ccapacity(pars))) * pars.r_move
 
 @inline exchange_rate(person, pars) =
 	if pars.exchange_mode == 1

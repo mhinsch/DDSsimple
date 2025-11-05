@@ -63,9 +63,9 @@
 	"sd of stepsize"
 	theta_mig :: Float64 = 2.5
 	"density dependence of move rate"
-	dd_move :: Float64 = 0.0
-	"offset of move rate for dd move"
-	dd_r_move_0 :: Float64 = 0.5
+	r_move_d :: Float64 = 0.0
+	"density independent move rate"
+	r_move_0 :: Float64 = 1.0
 
 	"donation model: 1 - provision, 2 - storage"
 	donate_mode :: Int = 1
