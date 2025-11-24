@@ -32,6 +32,13 @@ function sigmoid(x, alpha, mid=0.5)
 	xa/(((1.0-x)*c)^alpha + xa)
 end
 
+sigmoid2_scaling(x0, y0, alpha) = -log((1/y0-1)^(1/alpha)+1)/log(x0)
+
+function sigmoid2(x, scale, alpha)
+	xs = x^(scale*alpha)
+	xs / (xs + (1-x^scale)^alpha)
+end
+
 
 const Pos = Tuple{Float64, Float64}
 

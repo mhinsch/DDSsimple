@@ -44,6 +44,14 @@
 	eff_prov_death :: Float64 = 0.0
 	"nonlinear effects of provision on death (1=neutral)"
 	shape_prov_death :: Float64 = 2.0
+	"which density dependence model to use: 0 - old model, 1 - fertility, 2 - mixed, 3 - survival"
+	dd2_model :: Int = 1
+	"weight parameter for mixed version of the second density dependence model"
+	dd2_mixed :: Float64 = 0.035
+	"internal use only (cache)"
+	dd2_scale_cached_r :: Float64 = 0.0
+	"internal use only (cache)"
+	dd2_scale_cached_d :: Float64 = 0.0
 	
 	"specific carrying capacity ; K = r^2 * f"
 	spec_capacity :: Float64 = 1.0/5.0

@@ -7,6 +7,7 @@ include("params.jl")
 
 include("model.jl")	
 
+include("setup.jl")
 
 # scale capacity by size of effect area
 ccapacity(pars) = pars.spread_density^2 * pars.spec_capacity
@@ -49,13 +50,47 @@ pot_donation(person, pars) =
 
 @inline storage_reset_rate(person, pars) = pars.r_store_reset
 	
-@inline repr_rate(person, pars) = pars.r_repr * 
+@inline repr_rate1(person, pars) = pars.r_repr * 
 	(1.0-pars.eff_prov_repr +
 	pars.eff_prov_repr * sigmoid(limit(0.0, provision(person, pars), 1.0), pars.shape_prov_repr)) 
-	
-@inline death_rate(person, pars) = pars.r_death + pars.r_starve * 
+
+@inline function repr_rate2(person, pars)
+	density = limit(0.0, (1.0-provision(person, pars))/2, 1.0)
+	r = pars.dd2_model == 3 ?
+		1.0 :
+		1.0 - sigmoid2(density, pars.dd2_scale_cached_r, pars.shape_prov_repr)
+
+	r * pars.r_repr
+end
+
+@inline repr_rate(person, pars) = 
+	if pars.dd2_model == 0
+		repr_rate1(person, pars)
+	else
+		repr_rate2(person, pars)
+	end
+
+
+@inline death_rate1(person, pars) = pars.r_death + pars.r_starve * 
 	pars.eff_prov_death * sigmoid(limit(0.0, -provision(person, pars), 1.0), pars.shape_prov_death)  
 
+@inline function death_rate2(person, pars)
+	density = limit(0.0, (1.0-provision(person, pars))/2, 1.0)
+	d = pars.dd2_model == 1 ?
+		0.0 :
+		(1.0-pars.r_death)*sigmoid2(density, pars.dd2_scale_cached_d, pars.shape_prov_death)
+
+	d + pars.r_death
+end
+
+@inline death_rate(person, pars) = 
+	if pars.dd2_model == 0
+		death_rate1(person, pars)
+	else
+		death_rate2(person, pars)
+	end
+
+		
 @inline move_rate(person, pars) =
 	(pars.r_move_0 + pars.r_move_d * person.density/ccapacity(pars)) * pars.r_move
 #	(1-pars.dd_move + pars.dd_move*(pars.dd_r_move_0 + person.density/ccapacity(pars))) * pars.r_move
@@ -354,123 +389,3 @@ function shuffle_coop!(world, pars)
     nothing
 end
 
-
-function setup(pars)
-	cache_zoom = 5.0
-	world = World(
-		Cache2D{Person}(floor.(Int, (pars.sz_y, pars.sz_x)./cache_zoom) .+ 1, cache_zoom),
-		Cache2D{Weather}(floor.(Int, (pars.sz_y, pars.sz_x)./cache_zoom) .+ 1, cache_zoom),
-		Cache2D{Obstacle}(floor.(Int, (pars.sz_y, pars.sz_x)./cache_zoom) .+ 1, cache_zoom))
-
-	sim = Sim(world, pars, 0, 0, 0)
-
-	ini_y_mi = pars.sz_y/2 - pars.ini_y/2
-	ini_y_ma = pars.sz_y/2 + pars.ini_y/2
-	ini_x_mi = pars.sz_x/2 - pars.ini_x/2
-	ini_x_ma = pars.sz_x/2 + pars.ini_x/2
-
-	for i in 1:pars.n_obst
-		x, y = 0.0, 0.0
-		while true
-			y = rand() * pars.sz_y
-			x = rand() * pars.sz_x
-			if ! (ini_y_mi < y < ini_y_ma && ini_x_mi < x < ini_x_ma)
-				break
-			end
-		end
-
-		new_obst = Obstacle((y,x), pars.obst_effect)
-		add_to_cache!(world.obstacle_cache, new_obst, (y,x))
-	end
-	
-	pop = Person[]
-	for i in 1:pars.n_ini
-		pos = ini_y_mi + rand() * pars.ini_y, 
-			   ini_x_mi + rand() * pars.ini_x 
-			   
-		person = Person(pos)
-		# artificial toa to avoid ambiguities
-		person.toa = -i
-
-		if pars.n_family > 0
-			if pars.ini_rand_family
-				person.family = BitVector(rand(Bool, pars.n_family))
-			else
-				person.family = BitVector(zeros(Bool, pars.n_family))
-			end
-		end
-		person.coop = rand() * (pars.ini_coop[2] - pars.ini_coop[1]) + pars.ini_coop[1]
-		push!(pop, person)
-		add_to_cache!(world.pop_cache, person, person.pos)
-		adj_density_arrive!(person, Person[], world, pars)
-		set_landscape_arrive!(person, world, pars)
-	end
-
-	foreach(p -> spawn!(p, sim), pop)
-	spawn!(world, sim)
-
-	sim.N = pars.n_ini
-	
-	sim
-end
-
-
-function check_cache(cache)
-	for x in 1:size(cache.data)[2], y in 1:size(cache.data)[1]
-		for el in cache.data[y,x]
-			@assert pos2cache_idx(cache, el.pos) == (y,x) "$(pos2cache_idx(cache, el.pos)) != $y,$x)"
-		end
-	end
-end
-
-
-function check_weather_density(world, pars)
-	for x in 1:size(world.pop_cache.data)[2], y in 1:size(world.pop_cache.data)[1]
-		for person in world.pop_cache.data[y,x]
-			test_person = Person(person.pos, 0.0, 1.0)
-			set_weather_arrive!(test_person, world, pars)
-			@assert(abs(test_person.local_cond - person.local_cond)<0.0001,
-				 "$(test_person.local_cond) != $(person.local_cond)")
-			for p in iter_circle(world.pop_cache, test_person.pos, pars.spread_density*pars.effect_radius)
-				test_person.density += density(test_person.pos, p.pos, pars)
-			end	
-			@assert abs(test_person.density - person.density) < 0.0001 "$(test_person.density) != $(person.density)"
-		end
-	end
-end
-
-
-function check_iter_circle(world, pars)
-	pop = Person[]
-	for x in 1:size(world.pop_cache.data)[2], y in 1:size(world.pop_cache.data)[1]
-		append!(pop, world.pop_cache.data[y,x])
-	end
-
-	n = 0
-
-	for p1 in pop, p2 in pop
-
-		found1 = false
-		for person in iter_circle(world.pop_cache, p1.pos, pars.spread_density*pars.effect_radius)
-			if person == p2
-				found1 = true
-				break
-			end
-		end
-
-		found2 = false
-		for person in iter_circle(world.pop_cache, p2.pos, pars.spread_density*pars.effect_radius)
-			if person == p1
-				found2 = true
-				break
-			end
-		end
-
-		if found1 != found2
-			n += 1
-		end
-	end
-
-	@assert n==0 "$n mismatches"
-end
-		
