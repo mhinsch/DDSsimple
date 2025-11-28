@@ -10,7 +10,7 @@ mutable struct Person
 	toa :: Float64
 	"local N 5==K"
 	density :: Float64
-	"weather -1:0"
+	"weather ...:1"
 	local_cond :: Float64
 	"sharing 0==nothing"
 	exchange :: Float64

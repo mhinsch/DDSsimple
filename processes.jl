@@ -20,7 +20,7 @@ end
 function surplus(person, pars)
 	# 0:... 1==K
 	density = person.density / ccapacity(pars)
-	# ...:-1
+	# ...:0
 	lc = person.local_cond - 1
 	mode = pars.weather_density_mode
 	lc_effect =
@@ -35,6 +35,7 @@ function surplus(person, pars)
 			0.0
 		end
 
+	# -...:1
 	person.exchange + 1 + lc_effect + person.landscape - density
 end
 
