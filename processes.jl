@@ -18,7 +18,9 @@ function provision(person, pars)
 end	
 # current "income"
 function surplus(person, pars)
+	# 0:... 1==K
 	density = person.density / ccapacity(pars)
+	# ...:-1
 	lc = person.local_cond - 1
 	mode = pars.weather_density_mode
 	lc_effect =

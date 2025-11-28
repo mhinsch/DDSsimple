@@ -4,12 +4,19 @@ using MiniEvents
 
 
 mutable struct Person
+	"position"
 	pos :: Pos
+	"time of arrival"
 	toa :: Float64
+	"local N 5==K"
 	density :: Float64
+	"weather -1:0"
 	local_cond :: Float64
+	"sharing 0==nothing"
 	exchange :: Float64
+	"stored food"
 	storage :: Float64
+	"obstacles -1:0"
 	landscape :: Float64
 	coop :: Float64
 	family :: BitVector
